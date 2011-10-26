@@ -211,8 +211,8 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 				w.val.rival.idx <- l
 			}
 			
-		}
-	}
+		
+	
 
 	
 	
