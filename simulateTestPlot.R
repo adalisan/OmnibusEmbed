@@ -211,7 +211,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel){
 									col=colors.vec,lty=lty.i.vec)
 							title(plot.title)
 							par(lty=1)
-							fname<- paste(c(results.dir,model,"-FC-Tradeoff-",ifelse(oos,"OOS","noOOS"),"c",c.val),collapse="")
+							fname<- file.path('graphs',paste(c(model,"-FC-Tradeoff-",ifelse(oos,"OOS","noOOS"),"c",c.val),collapse=""))
 							if(!run.in.linux)  savePlot(paste(fname,".pdf",sep="",collapse=""),type="pdf")
 							if(!run.in.linux)  savePlot(filename=paste(fname,".ps",sep="",collapse=""),type="ps")
 							savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
@@ -237,7 +237,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel){
 							plot.graph.with.CI(Comm,"Fid and Comm Terms","blue",conf.int=TRUE,  add=TRUE,fp.points=w.vals,
 									customx.labels=NULL,customy.labels=NULL,ispowercurve=FALSE)
 							traceback()
-							fname<- paste(c(results.dir,model,"-FidCommTerms-n",n,"-",ifelse(oos,"OOS","noOOS"),"c",c.val),collapse="",sep="")
+							fname<- file.path('graphs',paste(c(model,"-FidCommTerms-n",n,"-",ifelse(oos,"OOS","noOOS"),"c",c.val),collapse="",sep=""))
 							if(!run.in.linux)  savePlot(paste(fname,".pdf",sep="",collapse=""),type="pdf")
 							if(!run.in.linux)  savePlot(filename=paste(fname,".ps",sep="",collapse=""),type="ps")
 							savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
@@ -255,7 +255,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel){
 							}
 							
 							
-							fname<- paste(c(results.dir,model,"-points-FidCommTerms-n",n,"-",ifelse(oos,"OOS","noOOS"),"c",c.val),collapse="",sep="")
+							fname<- file.path('graphs',paste(c(model,"-points-FidCommTerms-n",n,"-",ifelse(oos,"OOS","noOOS"),"c",c.val),collapse="",sep=""))
 							if(!run.in.linux)  savePlot(paste(fname,".pdf",sep="",collapse=""),type="pdf")
 							if(!run.in.linux)  savePlot(filename=paste(fname,".ps",sep="",collapse=""),type="ps")
 							savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
@@ -343,7 +343,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel){
 						
 										
 							#title(paste(model," model: power vs w plot"))
-							fname<-paste(results.dir,ifelse(oos,"OOS","noOOS"),model,"-power-w-c",c.val,sep="", collapse="")
+							fname <- file.path('graphs',paste(results.dir,ifelse(oos,"OOS","noOOS"),model,"-power-w-c",c.val,sep="", collapse=""))
 							if(!run.in.linux)	savePlot(paste(fname,".pdf",sep="",collapse=""),"pdf")
 							savePlot(paste(fname,".png",sep="",collapse=""),"png")
 							
