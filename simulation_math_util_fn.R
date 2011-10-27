@@ -632,11 +632,7 @@ run.jofc <- function(D1, D2, D10A,D20,D2A,
 		# OOS Dissimilarity matrices
 		#
 		
-		
-		
-	
-			
-			
+
 			
 		#Imputing dissimilarity  entries for OOS
 		if (Wchoice == "avg") {
@@ -772,10 +768,6 @@ run.jofc <- function(D1, D2, D10A,D20,D2A,
 			TA[l,] <- rowSums((Y1t.A - Y2At)^2)
 			}
 			
-			
-	
-	
-	
 	
 	
 }

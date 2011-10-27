@@ -518,7 +518,7 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 		source("./src/oosMDS.R")
 		source("./src/smacofM.R")
 		source("./src/oosIM.R")
-		sink(file=file.path('log',paste("debug-G-",mc,".txt",collapse="")))
+		sink(file=file.path('logs',paste("debug-G-",mc,".txt",collapse="")))
 		set.seed(mc)
 		#if(mc<=4) {for(i in 1:mc) print(mvrnorm(4,mu=rep(0,4),Sigma=diag(4)))}
 		print(runif(2))
@@ -551,7 +551,7 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 				verbose=verbose,
 				power.comparison.test=power.comparison.test) 
 		#)
-		sink(file=file.path('log',paste("traceback-debug-G-",mc,".txt",collapse="")))
+		sink(file=file.path('logs',paste("traceback-debug-G-",mc,".txt",collapse="")))
 		traceback()
 		sink()
 		#If  simulation fails, generate a results list of NAs
