@@ -551,9 +551,9 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 				verbose=verbose,
 				power.comparison.test=power.comparison.test) 
 		#)
-		sink(file=file.path('logs',paste("traceback-debug-G-",mc,".txt",collapse="")))
-		traceback()
-		sink()
+		#sink(file=file.path('logs',paste("traceback-debug-G-",mc,".txt",collapse="")))
+		#traceback()
+		#sink()
 		#If  simulation fails, generate a results list of NAs
 		if (inherits(tmp,"try-error")) {
 			print(paste("error in iter ",mc,collapse=""))
