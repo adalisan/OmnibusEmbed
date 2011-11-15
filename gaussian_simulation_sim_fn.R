@@ -1,312 +1,5 @@
 
 
-
-gaussian_simulation <- function(p, r, q, c.val,
-		d           = p-1,
-		pprime1     = p+q,   # cca arguments
-		pprime2     = p+q,   # cca arguments
-		Wchoice     = "avg", 
-		pre.scaling = TRUE,
-		oos         = TRUE,
-		alpha       = NULL,
-		n = 100, m = 100, nmc = 100,
-		old.gauss.model.param=FALSE,
-		sim.grass=FALSE,
-		eigen.spectrum=FALSE) {
-	## p: draw observations (signal) on Delta^p \in R^{p+1}
-	## r: determine the matchedness between matched pairs --
-	##    r = 0, independent(?); r = infinity, exact match
-	## q: noise from Delta^q \in R^{q+1}
-	## c.val: weight on noise
-	##    X_{ik} ~ [(1-c.val)*signal, c.val*noise], i = 1, ..., n; k = 1, 2
-	## d: dimension of projection space
-	## alpha: Normal on Delta^p (NULL) or given
-	##        if given, alpha is a list of length nmc, in which each
-	##        component is a (n+2*m)x(p+1) matrix
-	## Wchoice:
-	##    "avg" => (D1 + D2)/2
-	##    "sqrt" => sqrt((D1^2 + D2^2)/2)
-	##    
-	## n  : number of matched pairs
-	## m  : number of testing pairs -- m matched pairs and m unmatched pairs
-	## nmc: number of MC replicates
-	##
-	## Return: powers
-	
-	size <- seq(0, 1, 0.01)
-	len <- length(size)
-	power <- list(cca  = matrix(0, nmc, len),
-			pom  = matrix(0, nmc, len),
-			jofc = matrix(0, nmc, len),
-			threeway.iden = matrix(0, nmc, len),
-			threeway.diag = matrix(0, nmc, len),
-			threeway.idio = matrix(0, nmc, len)
-	)
-	epsilon.pom <- matrix(0,nmc,3)
-	initial.vectors.x1 <- matrix(0,p+q,p+q)
-	initial.vectors.x2 <- matrix(0,p+q,p+q)
-	eigenvalue.sample.x1 <- matrix (NA,p+q,nmc)
-	eigenvalue.sample.x2 <- matrix (NA,p+q,nmc)
-	grass.metric <- matrix(0,nmc,5)
-	geo.dist <- matrix(0,nmc,5)
-	Haursdorf <- matrix(0,nmc,5)
-	
-	for(mc in 1:nmc) {
-		set.seed(mc)
-		print(mc)
-		sigma <- matrix(0,p,p)
-		
-		if (is.null(alpha)) {
-			sigma<- diag(p)
-			if (old.gauss.model) sigma <-Posdef(p,r)
-			alpha.mc <- mvrnorm(n+(2*m), rep(0,p),sigma)
-		} else {
-			alpha.mc <- alpha[[mc]]
-		}
-		
-		## n pairs of matched points
-		xlist <- matched_rnorm(n, p, q, c.val, r, alpha=alpha.mc[1:n, ],sigma.alpha=sigma,old.gauss.model.param=old.gauss.model.param)
-		X1 <- xlist$X1
-		X2 <- xlist$X2
-		D1 <- dist(X1)
-		D2 <- dist(X2)
-		if (pre.scaling) {
-			s <- lm(as.vector(D1) ~ as.vector(D2) + 0)$coefficients
-		} else {
-			s <- 1
-		}
-		
-		if (eigen.spectrum){
-			
-			e.decomp.x<-eigen(cov(X1))
-			e.decomp.y<-eigen(cov(X2))
-			
-			
-			if (mc==1){
-				initial.vectors.x1 <-	e.decomp.x$vectors
-				initial.vectors.x2 <-	e.decomp.y$vectors
-				eigenvalue.sample.x1[,1] <- e.decomp.x$values
-				eigenvalue.sample.x2[,1] <- e.decomp.y$values
-			}
-			else{
-				for (cur.evector.ind in 1:(p+q)){
-					cur.evector.match.1<-F
-					cur.evector.match.2<-F
-					for (init.evector.ind in 1:(p+q)){
-						dot.pr.1 <- sum(e.decomp.x$vectors[,cur.evector.ind]*initial.vectors.x1[,init.evector.ind])
-						dot.pr.2 <- sum(e.decomp.y$vectors[,cur.evector.ind]*initial.vectors.x2[,init.evector.ind])
-						if ((!cur.evector.match.1)&dot.pr.1>0.95){
-							eigenvalue.sample.x1[init.evector.ind,mc] <- 
-									e.decomp.x$values[cur.evector.ind]
-							cur.evector.match.1<-T
-						}
-						if ((!cur.evector.match.2)&dot.pr.2>0.95){
-							eigenvalue.sample.x2[init.evector.ind,mc] <- 
-									e.decomp.y$values[cur.evector.ind]
-							cur.evector.match.2<-T
-							
-						}
-						if (cur.evector.match.1&cur.evector.match.2)  break
-					}
-				}
-			}
-		}
-		## test observations -- m pairs of matched and m pairs of unmatched
-		ylist <- matched_rnorm(m, p, q, c.val, r, alpha=alpha.mc[(n+1):(n+m), ],sigma.alpha=sigma,old.gauss.model.param=old.gauss.model.param)
-		Y1 <- ylist$X1
-		Y20 <- ylist$X2
-		Y2A <- matched_rnorm(m, p, q, c.val, r, alpha=alpha.mc[(n+m+1):(n+m+m), ],sigma.alpha=sigma,old.gauss.model.param=old.gauss.model.param)$X2
-		D10A <- as.matrix(dist(rbind(X1, Y1)))
-		D20 <- as.matrix(dist(rbind(X2, Y20))) * s
-		D2A <- as.matrix(dist(rbind(X2, Y2A))) * s
-		
-		## ==== cca ====
-		if (oos == TRUE) {
-			if (c.val==0){
-				X1t <- cmdscale(D1, p)
-				X2t <- cmdscale(D2, p)
-				
-			} else{
-				X1t <- cmdscale(D1, pprime1)
-				X2t <- cmdscale(D2, pprime2)
-			}
-			
-			
-			xcca <- cancor(X1t, X2t)
-			
-#			if (use.Euc.points.y){
-#				if (!use.Euc.points.x & c.val==0){
-#				Y1t  <- (cbind(Y1,matrix(0,dim(Y1)[1],q))   %*% xcca$xcoef)[, 1:d]
-#				Y20t <- (cbind(Y20,matrix(0,dim(Y20)[1],q)) %*% xcca$ycoef)[, 1:d]
-#				Y2At <- (cbind(Y2A,matrix(0,dim(Y2A)[1],q)) %*% xcca$ycoef)[, 1:d]
-#				} else{
-#				Y1t  <- (Y1  %*% xcca$xcoef)[, 1:d]
-#				Y20t <- (Y20 %*% xcca$ycoef)[, 1:d]
-#				Y2At <- (Y2A %*% xcca$ycoef)[, 1:d]				
-#				}
-#			
-#			} else{
-			Y1t <- (oosMDS(D10A, X1t) %*% xcca$xcoef)[, 1:d]
-			Y20t <- (oosMDS(D20, X2t) %*% xcca$ycoef)[, 1:d]
-			Y2At <- (oosMDS(D2A, X2t) %*% xcca$ycoef)[, 1:d]
-#		    }
-		} else {
-			X1t <- cmdscale(D10A, pprime1)
-			X2t <- cmdscale(dist(rbind(X2, Y20, Y2A)), pprime2)
-			center1 <- colMeans(X1t[1:n, ])   # column means of training obs
-			center2 <- colMeans(X2t[1:n, ])
-			X1t <- X1t - matrix(center1, n+m, pprime1, byrow=TRUE) # column-center training only
-			X2t <- X2t - matrix(center2, n+2*m, pprime2, byrow=TRUE)
-			cca <- cancor(X1t[1:n, ], X2t[1:n, ])
-			Y1t <- (X1t[(n+1):(n+m), ] %*% cca$xcoef )[, 1:d]
-			Y20t <- (X2t[(n+1):(n+m), ] %*% cca$ycoef)[, 1:d]
-			Y2At <- (X2t[(n+m+1):(n+2*m), ] %*% cca$ycoef)[, 1:d]
-		}
-		T0 <- rowSums((Y1t - Y20t)^2)
-		TA <- rowSums((Y1t - Y2At)^2)
-		power$cca[mc, ] <- get_power(T0, TA, size)
-		
-		## ==== pom = procrustes o mds ====
-		if (oos == TRUE) {
-			X1t <- cmdscale(D1, d)
-			X2t <- cmdscale(D2, d)
-			proc <- procrustes(X2t, X1t, dilation=TRUE)
-			Y1t <- oosMDS(D10A, X1t)
-			Y20t <- oosMDS(D20, X2t) %*% proc$R * proc$s
-			Y2At <- oosMDS(D2A, X2t) %*% proc$R * proc$s
-		} else {
-			X1t <- cmdscale(D10A, d)
-			X2t <- cmdscale(dist(rbind(X2, Y20, Y2A)), d)
-			center1 <- colMeans(X1t[1:n, ])
-			center2 <- colMeans(X2t[1:n, ])
-			X1t <- X1t - matrix(center1, n+m, d, byrow=TRUE) # column-center training only
-			X2t <- X2t - matrix(center2, n+2*m, d, byrow=TRUE)
-			proc <- procrustes(X2t[1:n, ], X1t[1:n, ], dilation=TRUE)
-			Y1t <- X1t[(n+1):(n+m), ]
-			Y20t <- X2t[(n+1):(n+m), ] %*% proc$R * proc$s
-			Y2At <- X2t[(n+m+1):(n+2*m), ] %*% proc$R * proc$s
-		}
-		T0 <- rowSums((Y1t - Y20t)^2)
-		TA <- rowSums((Y1t - Y2At)^2)
-		power$pom[mc, ] <- get_power(T0, TA, size)
-		
-		
-		#
-		# Grassmannian metric
-		if (sim.grass){
-			if (oos == TRUE) {
-				pc1 <- prcomp(X1t)
-				pc2 <- prcomp(X2t)
-				X1t.sub <- pc1$x[, 1:d]
-				X2t.sub <- pc2$x[, 1:d]
-				proc <- procrustes(X2t.sub, X1t.sub, dilation=TRUE)}
-			else{
-				pc1 <- prcomp(X1t)
-				pc2 <- prcomp(X2t)
-				proc <- procrustes(X2t[1:n, ], X1t[1:n, ], dilation=TRUE)
-				X1t.sub <- pc1$x[1:n, 1:d]
-				X2t.sub <- pc2$x[1:n, 1:d] %*% proc$R * proc$s
-				
-			}
-			
-			epsilon.pom[mc, ] <- get_epsilon(D1, dist(X1t[1:n,]), D2, dist(X2t[1:n,]),
-					X1t[1:n, ], proc$X.new[1:n, ])
-			
-			
-			R1 <- pc1$rotation[, 1:d]
-			R2 <- pc2$rotation[, 1:d]
-			
-			#Q1<- R1%*%t(R1)
-			#Q2<- R2%*%t(R2)
-			Q1 <- R1
-			Q2 <- R2
-			grass.metric[mc, 1] <- grassmannian(Q1, Q2) # plain
-			geo.dist[mc, 1] <- geo_dist(Q1, Q2)
-			Haursdorf [mc, 1] <- Haursdorf_dist (Q1, Q2)
-			
-			sa <- lm(as.vector(X1t) ~ as.vector(X2t) + 0)$coefficients # scale after embedding
-			
-			#Q2<- R2%*%t(R2)
-			Q2 <- R2 * sa
-			grass.metric[mc, 2] <- grassmannian(Q1, Q2 )           # scale after embedding
-			geo.dist[mc, 2] <- geo_dist(Q1, Q2)
-			Haursdorf [mc, 2] <- Haursdorf_dist(Q1, Q2 )
-			
-			
-			sb <- lm(as.vector(D1) ~ as.vector(D2) + 0)$coefficients   # scale before embedding
-			Q2 <- R2 * sb
-			#Q2<- R2%*%t(R2)
-			
-			grass.metric[mc, 3] <- grassmannian(Q1, Q2)           # scale before embedding
-			geo.dist[mc, 3] <- geo_dist(Q1, Q2 )
-			Haursdorf [mc, 3] <- Haursdorf_dist(Q1, Q2)
-			
-			P <- polarity(X2t, X1t)
-			Q2 <- R2 %*% P * proc$s
-			#Q2<- R2%*%t(R2)
-			
-			
-			grass.metric[mc, 4] <- grassmannian(Q1, Q2)     # scale after embedding & polarity
-			geo.dist[mc, 4] <- geo_dist(Q1, Q2 %*% P * proc$s)
-			Haursdorf [mc, 4] <- Haursdorf_dist(Q1, Q2)
-			
-			
-			Q2 <- R2%*% proc$R * proc$s
-			#Q2<- R2%*%t(R2)
-			#Q2 <- R2
-			grass.metric[mc, 5] <- grassmannian(Q1, Q2 ) # procrustes
-			geo.dist[mc, 5] <- geo_dist(Q1, Q2 )
-			Haursdorf [mc, 5] <- Haursdorf_dist(Q1, Q2  )
-		}
-		
-		
-		
-		
-		## ==== jofc ====
-		if (Wchoice == "avg") {
-			W <- (D1 + D2)/2
-		} else if (Wchoice == "sqrt") {
-			W <- sqrt((D1^2 + D2^2)/2)
-		}
-		if (oos == TRUE) {
-			M <- omnibusM(D1, D2, W)
-			X <- cmdscale(M, d)
-			X1t <- X[1:n, ]
-			X2t <- X[-(1:n), ]
-			Y1t <- oosMDS(dist(rbind(X1, Y1)), X1t)
-			Y20t <- oosMDS(dist(rbind(X2, Y20)), X2t)
-			Y2At <- oosMDS(dist(rbind(X2, Y2A)), X2t)
-			T0 <- rowSums((Y1t - Y20t)^2)
-			TA <- rowSums((Y1t - Y2At)^2)
-		} else {
-			M0 <- omnibusM(D10A, D20, W=(D10A+D20)/2)
-			MA <- omnibusM(D10A, D2A, W=(D10A+D2A)/2)
-			X0 <- cmdscale(M0, d)
-			XA <- cmdscale(MA, d)
-			T0 <- rowSums((X0[(n+1):(n+m), ] - X0[(n+m+n+1):(n+m+n+m), ])^2)
-			TA <- rowSums((XA[(n+1):(n+m), ] - XA[(n+m+n+1):(n+m+n+m), ])^2)
-		}
-		power$jofc[mc, ] <- get_power(T0, TA, size)
-		
-		Test.stats.iden <- ThreewayMDS.Embed.Hyp.Test(D1,D2,X1,X2,Y1,Y20,Y2A,"identity",d)
-		power$threeway.iden[mc, ] <- get_power(Test.stats.iden$T0, Test.stats.iden$TA, size)
-		
-		Test.stats.diag <- ThreewayMDS.Embed.Hyp.Test(D1,D2,X1,X2,Y1,Y20,Y2A,"diagonal",d)
-		power$threeway.diag[mc, ] <- get_power(Test.stats.diag$T0, Test.stats.diag$TA, size)
-		
-		Test.stats.idio <- ThreewayMDS.Embed.Hyp.Test(D1,D2,X1,X2,Y1,Y20,Y2A,"idioscal",d)
-		power$threeway.idio[mc, ] <- get_power(Test.stats.idio$T0, Test.stats.idio$TA, size)
-	}    
-	if (eigen.spectrum){
-		plot.MC.evalues.with.CI(t(eigenvalue.sample.x1),"X1","blue",TRUE)
-		plot.MC.evalues.with.CI(t(eigenvalue.sample.x2),"X2","red",TRUE)
-	}
-	return(list(power=power,grassmannian=grass.metric,geodesic=geo.dist,
-					fc.pom = epsilon.pom,Haursdorf=Haursdorf))
-}
-
-
-
 gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 		d           = p-1,
 		pprime1     = p+q,   # cca arguments
@@ -316,8 +9,7 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 		oos         = TRUE,
 		alpha       = NULL,
 		n = 100, m = 100, nmc = 100,
-		sim.grass=FALSE,
-		eigen.spectrum=FALSE,
+	
 		old.gauss.model.param=FALSE,
 		separability.entries.w,
 		compare.pom.cca=TRUE,
@@ -329,7 +21,8 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 		assume.matched.for.oos,
 		w.vals,
 		wt.equalize,
-		verbose) {
+		verbose,
+    power.comparison.test=TRUE) {
 	## p: draw observations (signal) on Delta^p \in R^{p+1}
 	## r: determine the matchedness between matched pairs --
 	##    r = 0, independent(?); r = infinity, exact match
@@ -352,6 +45,16 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 	
 	w.max.index <- length(w.vals)
 	
+    
+	Fid.Terms.1<-c()
+	Fid.Terms.2<-c()
+	Comm.Terms <-c()
+	
+	F.to.C.ratio <-  c()
+	wtF.to.C.ratio <- c()
+	F.bar.to.C.bar.ratio <-c()
+  
+  
 	size <- seq(0, 1, 0.01)
 	len <- length(size)
 	power <- array(0,dim=c(w.max.index,nmc,len))
@@ -362,7 +65,9 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 	empty.cont.tab<- list(matrix(0,2,2))
 	cont.tables<-rep(empty.cont.tab,nmc)
 	min.stress<- array(0,dim=c(nmc,w.max.index+1))
-	
+	optim.power.vec <- array(0,dim=c(nmc,len))
+  best.w.vals <-rep (0,nmc)
+  
 	for(mc in 1:nmc) {
 		
 		set.seed(mc)
@@ -377,8 +82,7 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 						oos         = oos,
 						alpha       = alpha,
 						n = n, m = m,
-						sim.grass=sim.grass,
-						eigen.spectrum=eigen.spectrum,
+						
 						old.gauss.model.param=old.gauss.model.param,
 						separability.entries.w=separability.entries.w,
 						compare.pom.cca=compare.pom.cca,
@@ -390,7 +94,8 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 						assume.matched.for.oos=assume.matched.for.oos,
 						w.vals=w.vals,
 						wt.equalize=wt.equalize,
-						verbose=verbose))
+						verbose=verbose,
+            power.comparison.test=power.comparison.test))
 		if (inherits(mc.run,"try-error")){
 			print(paste("error in iter",mc,collapse="")	)
 			power.mc= array(NA,dim=c(w.max.index,len))
@@ -434,14 +139,33 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 			min.stress[mc,]   <-mc.run$min.stress
 			
 		}
-	
+    
+	  
+    Fid.Terms.1 <- rbind(Fid.Terms.1, mc.run$FidComm.Terms$F1)
+		Fid.Terms.2 <- rbind(Fid.Terms.2, mc.run$FidComm.Terms$F2)
+		Comm.Terms <- rbind(Comm.Terms, mc.run$FidComm.Terms$C)
+		F.to.C.ratio <-  rbind(F.to.C.ratio,mc.run$F.to.C.ratio)
+		wtF.to.C.ratio <- rbind(wtF.to.C.ratio,mc.run$wtF.to.C.ratio)
+		F.bar.to.C.bar.ratio <- rbind(F.bar.to.C.bar.ratio,mc.run$F.bar.to.C.bar.ratio)
+    
+    
+	  optim.power.vec[mc,]<- mc.run$optim.power
+    best.w.vals[mc] <- mc.run$best.w
 		
 		
 		
 		
 	}
+  FC.terms<-list(F1=Fid.Terms.1, F2=Fid.Terms.2, C=Comm.Terms)
+  FC.ratios<-list(f.c=F.to.C.ratio,wtf.c=wtF.to.C.ratio,f.c.bar=F.bar.to.C.bar.ratio)
+    
+  
+  
 	return (list(power=power,power.cmp=power.cmp, conting.table=agg.cont.table,conting.table.list=cont.tables,
-					config.dist=config.dist,min.stress=min.stress))
+					config.dist=config.dist,min.stress=min.stress,FidComm.Terms=FC.terms,
+  				FC.ratios=FC.ratios,optim.power =  optim.power.vec,wstar.estim= The.mode( best.w.vals) ))
+  
+  
 }
 
 
@@ -455,8 +179,7 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 		oos         = TRUE,
 		alpha       = NULL,
 		n = 100, m = 100, nmc = 100,
-		sim.grass=FALSE,
-		eigen.spectrum=FALSE,
+	
 		old.gauss.model.param=FALSE,
 		separability.entries.w,
 		compare.pom.cca=TRUE,
@@ -468,7 +191,8 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 		assume.matched.for.oos,
 		w.vals,
 		wt.equalize,
-		verbose=FALSE) {
+		verbose=FALSE,
+    power.comparison.test=TRUE)  {
 	## p: draw observations (signal) on Delta^p \in R^{p+1}
 	## r: determine the matchedness between matched pairs --
 	##    r = 0, independent(?); r = infinity, exact match
@@ -551,9 +275,9 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 				verbose=verbose,
 				power.comparison.test=power.comparison.test) 
 		#)
-		#sink(file=file.path('logs',paste("traceback-debug-G-",mc,".txt",collapse="")))
-		#traceback()
-		#sink()
+		if (verbose) sink(file=file.path('logs',paste("traceback-debug-G-",mc,".txt",collapse="")))
+		if (verbose) traceback()
+		if (verbose) sink()
 		#If  simulation fails, generate a results list of NAs
 		if (inherits(tmp,"try-error")) {
 			print(paste("error in iter ",mc,collapse=""))

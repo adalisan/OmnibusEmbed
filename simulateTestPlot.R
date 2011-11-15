@@ -12,14 +12,17 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel){
 				print(p)
 				print("w values")
 				print(w.vals)
+        if (model=="MVN") real.dim<- p+q
+            if (model=="Dirichlet") real.dim <- p+q+2
 				begin.time.g <-Sys.time()
 				args.for.func.call<-list(p=p, r=r, q=q, c.val=c.val,d=d,
+           pprime1= real.dim, pprime2= real.dim,
 						Wchoice     = "avg", 
 						pre.scaling = TRUE,
 						oos         = oos,
 						alpha       = NULL,
 						n = n, m = s, nmc = nmc,
-						sim.grass=grassmannian.dist,
+					
 						old.gauss.model.param=old.gauss.model,
 						separability.entries.w=separability.entries.w,
 						compare.pom.cca=compare.pom.cca,
@@ -31,10 +34,10 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel){
 						assume.matched.for.oos =assume.matched.for.oos,
 						w.vals=w.vals,
 						wt.equalize=wt.equalize,
-						verbose=verbose)
+						verbose=verbose,  power.comparison.test=power.comparison.test)
 				sim.res <- do.call(call.func,args=args.for.func.call)
-				#print("Struct of sim.res")
-				#print(str(sim.res))
+				if (verbose) print("Struct of sim.res")
+				if (verbose)  print(str(sim.res))
 				print("Simulation completed.Starting Plotting functions")
 				#sim.res<- call.func(p=p, r=r, q=q, c.val=c.val,d=d,
 				#Wchoice     = "avg", 
@@ -141,7 +144,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel){
 							
 							#
 							if(!run.in.linux)	savePlot(paste(model,c.val,"p-values-McNemars-hist",".pdf",collapse="",sep=""),"pdf")
-							savePlot(paste(model,c.val,"p-values-McNemars-hist",".png",collapse="",sep=""),"png")
+							if(!run.in.linux) savePlot(paste(model,c.val,"p-values-McNemars-hist",".png",collapse="",sep=""),"png")
 							
 							if(!run.in.linux) savePlot(paste(model,c.val,"p-values-McNemars-hist",".ps",sep="",collapse=""),"ps")
 							if( run.in.linux) X11() else {windows()}
@@ -151,7 +154,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel){
 							
 							#
 							if(!run.in.linux)	savePlot(paste(model,c.val,"p-values-McNemars-kde",".pdf",collapse="",sep=""),"pdf")
-							savePlot(paste(model,c.val,"p-values-McNemars-kde",".png",collapse="",sep=""),"png")
+							if(!run.in.linux) savePlot(paste(model,c.val,"p-values-McNemars-kde",".png",collapse="",sep=""),"png")
 							
 							if(!run.in.linux) savePlot(paste(model,c.val,"p-values-McNemars-kde",".ps",collapse="",sep=""),"ps")
 							if( run.in.linux) X11() else {windows()}
@@ -159,14 +162,14 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel){
 #	
 # Error checking :Convergence of JOFC config to PoM config as w->0
 #
-							plot.graph.with.CI(sim.res$config.dist[,,1],plot.title="Config. Mismatch of wMDS with PoM",plot.col="black",conf.int=FALSE,fp.points=1:length(w.vals))
+						#	plot.graph.with.CI(sim.res$config.dist[,,1],plot.title="Config. Mismatch of wMDS with PoM",plot.col="black",conf.int=FALSE,fp.points=1:length(w.vals))
 							
 							
 							if( run.in.linux) X11() else {windows()}
 							
 							w.val.len<- length(w.vals)
-							plot.graph.with.CI(sim.res$min.stress[,1:w.val.len],plot.title="Minimum Stress",plot.col="black",conf.int=FALSE,fp.points=1:length(w.vals))
-							lines(x=1:w.val.len, y=rep(mean(sim.res$min.stress[,w.val.len+1]),w.val.len),col="red")
+						#	plot.graph.with.CI(sim.res$min.stress[,1:w.val.len],plot.title="Minimum Stress",plot.col="black",conf.int=FALSE,fp.points=1:length(w.vals))
+						#	lines(x=1:w.val.len, y=rep(mean(sim.res$min.stress[,w.val.len+1]),w.val.len),col="red")
 							
 							if( run.in.linux) X11() else {windows()}
 							
@@ -214,18 +217,20 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel){
 							fname<- file.path('graphs',paste(c(model,"-FC-Tradeoff-",ifelse(oos,"OOS","noOOS"),"c",c.val),collapse=""))
 							if(!run.in.linux)  savePlot(paste(fname,".pdf",sep="",collapse=""),type="pdf")
 							if(!run.in.linux)  savePlot(filename=paste(fname,".ps",sep="",collapse=""),type="ps")
-							savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
+							if(!run.in.linux) savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
 							
 							dev.off()
 	
 							}
 
 					
-							
+							if (verbose) print("F's and C")
 							Fid1<-sim.res$FidComm.Terms$F1
 							Fid2<-sim.res$FidComm.Terms$F2
 							Comm<-sim.res$FidComm.Terms$C
 							
+              if (verbose) print(c("Fid1","Fid2","Comm"))
+              if (verbose) print(cbind(Fid1,Fid2,Comm))
 						
 							
 							plot.graph.with.CI(Fid1,"Fid and Comm Terms","red",conf.int=TRUE,   add=FALSE,fp.points=w.vals,
@@ -240,9 +245,9 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel){
 							fname<- file.path('graphs',paste(c(model,"-FidCommTerms-n",n,"-",ifelse(oos,"OOS","noOOS"),"c",c.val),collapse="",sep=""))
 							if(!run.in.linux)  savePlot(paste(fname,".pdf",sep="",collapse=""),type="pdf")
 							if(!run.in.linux)  savePlot(filename=paste(fname,".ps",sep="",collapse=""),type="ps")
-							savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
+							if(!run.in.linux) savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
 																		
-							windows()
+							if( run.in.linux) X11() else {windows()}
 							plot.default(x=params$w.vals,y=rep(0,w.val.len),ylim=c(0,1.5))
 							for (n.plot in 1:nmc){
 							
@@ -258,7 +263,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel){
 							fname<- file.path('graphs',paste(c(model,"-points-FidCommTerms-n",n,"-",ifelse(oos,"OOS","noOOS"),"c",c.val),collapse="",sep=""))
 							if(!run.in.linux)  savePlot(paste(fname,".pdf",sep="",collapse=""),type="pdf")
 							if(!run.in.linux)  savePlot(filename=paste(fname,".ps",sep="",collapse=""),type="ps")
-							savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
+							if(!run.in.linux) savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
 							
 							
 							avgFid1.n<-colMeans(Fid1)
@@ -345,7 +350,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel){
 							#title(paste(model," model: power vs w plot"))
 							fname <- file.path('graphs',paste(results.dir,ifelse(oos,"OOS","noOOS"),model,"-power-w-c",c.val,sep="", collapse=""))
 							if(!run.in.linux)	savePlot(paste(fname,".pdf",sep="",collapse=""),"pdf")
-							savePlot(paste(fname,".png",sep="",collapse=""),"png")
+							if(!run.in.linux) savePlot(paste(fname,".png",sep="",collapse=""),"png")
 							
 							if(!run.in.linux) savePlot(paste(fname,".ps",sep="",collapse=""),"ps")
 							

@@ -1,3 +1,8 @@
+#
+# OOS-embedding with weighted raw-stress 
+#
+
+
 oosIM <- function(D, X,
                   init     = "random",
                   verbose  = FALSE,

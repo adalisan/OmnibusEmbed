@@ -149,42 +149,80 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 	D2<-as.matrix(D2)
 	pom.config<-c()
 	cca.config<-c()
+  if (verbose) print(D2[,1:3])
+  if (verbose) print("s")
+  if (verbose) print(s)
+  
 	D2<-D2*s
 	
 	if (verbose) print("PoM and CCA embedding\n")	
+  if (verbose) print(D1[1:10,1:3])
+  if (verbose) print(D2[1:10,1:3])
+  
+  
+  pom.config <-NULL
+  regCCA.teststats <- list()
+    PoM.teststats<- list()
+   CCA.teststats <- list()
 	if (compare.pom.cca) {
 		
 		
 		
-		if (verbose) print("CCA test statistic complete\n")
+		
 		PoM.teststats<-run.pom(D1, D2, D10A,D20,D2A,
-					D.oos.1,
-					D.oos.2.null ,
-					D.oos.2.alt ,					
-					ideal.omnibus.0  ,
-					ideal.omnibus.A ,
-	
+				
+	      p,q,d,c.val,
 				n,m,
-				p,q,d,c.val,
+				
 				model,oos,proc.dilation,
-				w.vals=w.vals,
+			
 				verbose)
+    
+    
+    pom.config<-PoM.teststats$pom.config
+    if (verbose) print(PoM.teststats$T0[1:3])
+  if (verbose) print(PoM.teststats$TA[1:3])
+  
+    
+    
+    if (verbose) print("PoM test statistic complete\n")
 		CCA.teststats<-run.cca(D1, D2, D10A,D20,D2A,
-					D.oos.1,
-					D.oos.2.null ,
-					D.oos.2.alt ,					
-					ideal.omnibus.0  ,
-					ideal.omnibus.A ,
+				  p,q,d,c.val,
+          pprime1,pprime2,
 	
 				n,m,
-				p,q,d,c.val,
-				model,oos,proc.dilation,
-				w.vals=w.vals,
+			
+				model,oos,
+			
 				verbose)		
+    if (verbose) print("CCA test statistic complete\n")
+    if (cca.reg){
+        regCCA.teststats<-run.reg.cca(D1, D2, D10A,D20,D2A,
+				  p,q,d,c.val,
+          pprime1,pprime2,
+	
+				n,m,
+			
+				model,oos,
+			
+				verbose)		
+      
+    }
+    
+    
 		
 }
 
-
+  
+  
+    D.oos.1<-dist(Y1)
+		D.oos.2.null <- dist(Y20)
+		D.oos.2.alt <- dist(Y2A)
+  
+    ideal.omnibus.0  <- as.matrix(dist(rbind(X1,X2,Y1,Y20)))
+  		ideal.omnibus.A  <- as.matrix(dist(rbind(X1,X2,Y1,Y2A)))
+	
+  
 			 JOFC.results <-run.jofc(D1, D2, D10A,D20,D2A,
 					D.oos.1,
 					D.oos.2.null ,
@@ -195,21 +233,23 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 				n,m,
 				d,c.val,
 			  model,oos,Wchoice,separability.entries.w,wt.equalize,assume.matched.for.oos,oos.use.imputed,
-        compare.pom.cca =TRUE,
+        pom.config=pom.config,
 				w.vals=w.vals,
 				verbose)
 	
 			T0<- JOFC.results$T0
 			TA<- JOFC.results$TA
 	
-	
-			if (verbose) print("JOFC test statistic complete \n")
+  if (verbose) print("JOFC test statistic complete \n")
+	    for (l in 1:w.max.index){
+			
 			power.mcnemar.l <- get_power(T0[l,],TA[l,],level.mcnemar)
 			if (power.mcnemar.l>power.w.star){
 				rival.w <- w.vals[l]
 				power.w.star <- power.mcnemar.l
 				w.val.rival.idx <- l
 			}
+	    }
 			
 		
 	
@@ -318,22 +358,26 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 		power.mc[l, ] <- get_power(T0[l,], TA[l,], size)
 	}
 	
-	FidComm.Terms<- list(F1=Fid.Err.Term.1,F2=Fid.Err.Term.2,C=Comm.Err.Term)
-	FidComm.Sum.Terms <- list(F1=Fid.Err.Sum.Term.1,F2=Fid.Err.Sum.Term.2,C=Comm.Err.Sum.Term)
+
+	FidComm.Terms<- list(F1=JOFC.results$Fid.Err.Term.1,F2=JOFC.results$Fid.Err.Term.2,C=JOFC.results$Comm.Err.Term)
+	FidComm.Sum.Terms <- list(F1=JOFC.results$Fid.Err.Sum.Term.1,F2=JOFC.results$Fid.Err.Sum.Term.2,C=JOFC.results$Comm.Err.Sum.Term)
 	if(verbose) print(str(FidComm.Terms))
 	if(verbose) print("FC.ratio")
-	if(verbose) print(str(FC.ratio))
+	if(verbose) print(str(JOFC.results$FC.ratio))
 	if(verbose) print("FC.ratio.2")
-	if(verbose) print(str(FC.ratio.2))
+	if(verbose) print(str(JOFC.results$FC.ratio.2))
 	if(verbose) print("FC.ratio.3")
-	if(verbose) print(str(FC.ratio.3))
+	if(verbose) print(str(JOFC.results$FC.ratio.3))
 	
 	
 	print("end run.mc.replicate")
-	list(power.mc=power.mc,power.cmp=list(cca = power.cca.mc,pom = power.pom.mc,cca.reg =power.cca.reg.mc), cont.tables=cont.table,
-			config.dist= config.mismatch, min.stress=c(min.stress.for.w.val,pom.stress),means=means,FidComm.Terms=FidComm.Terms,
-			FidComm.Sum.Terms = FidComm.Sum.Terms,F.to.C.ratio = FC.ratio, wtF.to.C.ratio=FC.ratio.2,
-			F.bar.to.C.bar.ratio= FC.ratio.3,optim.power=optim.power
+	list(power.mc=power.mc,
+       power.cmp=list(cca = CCA.teststats$power,pom = PoM.teststats$power,cca.reg = regCCA.teststats$power),
+       cont.tables=cont.table,
+			config.dist= config.mismatch, min.stress=c(min.stress.for.w.val,pom.stress),means=means,
+       FidComm.Terms=FidComm.Terms,	FidComm.Sum.Terms = FidComm.Sum.Terms,
+       F.to.C.ratio = JOFC.results$FC.ratio, wtF.to.C.ratio=JOFC.results$FC.ratio.2,
+			F.bar.to.C.bar.ratio= JOFC.results$FC.ratio.3,optim.power=optim.power,best.w =rival.w
 			)
 	
 }
@@ -343,7 +387,10 @@ run.pom <- function(D1, D2, D10A,D20,D2A,
 				n,m,
 				model,oos,proc.dilation,
 				verbose){
-	
+    # if (verbose) print (D1[1:5,1:5])
+    #	if (verbose) print (D2[1:5,1:5])
+		
+  
 	T0.pom <- array(0,dim=c(m))    #Test statistics for PoM under null
 	TA.pom <- array(0,dim=c(m))    #Test statistics for JOFC under alternative
 	
@@ -352,8 +399,14 @@ run.pom <- function(D1, D2, D10A,D20,D2A,
 			#Embed in-sample
 			X1t <- smacofM(D1, ndim=d,verbose=FALSE)
 			X2t <- smacofM(D2, ndim=d,verbose=FALSE)
-			if (verbose) print (colMeans(X1t))
-			if (verbose) print (colMeans(X2t))
+#      if (verbose) print ("Configs")
+#  		if (verbose) print (X1t)
+#			if (verbose) print (X2t)
+     
+      
+      if (verbose) print ("Config. Means")
+	#		if (verbose) print (colMeans(X1t))
+	#		if (verbose) print (colMeans(X2t))
 			# Compute Proc from in-sample embeddings
 			proc <- MCMCpack::procrustes(X2t, X1t, dilation=proc.dilation)
 			# Out-of sample embed and Proc Transform dissimilarities
@@ -383,8 +436,9 @@ run.pom <- function(D1, D2, D10A,D20,D2A,
 		
 		T0.pom <- rowSums((Y1t - Y20t)^2)
 		TA.pom <- rowSums((Y1t - Y2At)^2)
-		power.pom.mc <- get_power(T0.pom, TA.pom, size)
+		power.pom <- get_power(T0.pom, TA.pom, size)
 		if (verbose) print("PoM test statistic complete \n")
+    return(list(T0=T0.pom,TA=TA.pom,power=power.pom,pom.config=pom.config))
 
 
 	
@@ -392,13 +446,22 @@ run.pom <- function(D1, D2, D10A,D20,D2A,
 
 run.cca<-function(D1, D2, D10A,D20,D2A,
 				p,q,d,c.val,
+        pprime1,pprime2,
 				n,m,
 				model,oos,
 				verbose){
 	
 	T0.cca <- array(0,dim=c(m))     #Test statistics for CCA under null
 	TA.cca <- array(0,dim=c(m))		#Test statistics for CCA under alternative
-	
+	  if (model=="gaussian"){
+					pprime1 <- p+q
+					pprime2 <- p+q
+				}
+				else{
+					pprime1 <- p+q+2
+					pprime2 <- p+q+2
+					
+				}
 	## ==== cca ====
 		#embed in-sample measurements
 		if (oos == TRUE) {
@@ -441,15 +504,7 @@ run.cca<-function(D1, D2, D10A,D20,D2A,
 					
 				}
 			} else{
-				if (model=="gaussian"){
-					pprime1 <- p+q
-					pprime2 <- p+q
-				}
-				else{
-					pprime1 <- p+q+2
-					pprime2 <- p+q+2
-					
-				}
+			
 				X1t <- smacofM(D10A, ndim=pprime1,verbose=FALSE,init=cmdscale(D10A,pprime1))
 				D20A <-dist(rbind(X2, Y20, Y2A))
 				X2t <- smacofM(D20A, ndim=pprime2,verbose=FALSE,init=cmdscale(D20A,pprime2))
@@ -478,6 +533,7 @@ run.cca<-function(D1, D2, D10A,D20,D2A,
 
 run.reg.cca<-function(D1, D2, D10A,D20,D2A,
 				p,q,d,c.val,
+        pprime1,pprime2,
 				n,m,
 				model,oos,proc.dilation,
 				verbose){
@@ -577,13 +633,27 @@ run.jofc <- function(D1, D2, D10A,D20,D2A,
 				n,m,
 				d,c.val,
 				model,oos,Wchoice,separability.entries.w,wt.equalize,assume.matched.for.oos,oos.use.imputed,
-        compare.pom.cca =TRUE,
+        
+        pom.config=NULL,
 				w.vals,
 				verbose=FALSE)   {
-	
-	
-	
 	w.max.index <- length(w.vals)
+	T0<-matrix(0,w.max.index,m)
+	TA<-matrix(0,w.max.index,m)
+	
+    Fid.Err.Term.1 <- c()
+		Fid.Err.Term.2 <- c()
+		Comm.Err.Term  <- c()
+		
+		Fid.Err.Sum.Term.1 <-c()
+		Fid.Err.Sum.Term.2 <- c()
+		Comm.Err.Sum.Term  <- c()
+		FC.ratio    <- c()
+		FC.ratio.2  <- c()
+		FC.ratio.3  <- c()
+  
+  
+  
 	## ==== jofc ====
 	
 	# Impute "between-condition" dissimilarities from different objects  
@@ -602,9 +672,10 @@ run.jofc <- function(D1, D2, D10A,D20,D2A,
 		#In sample embedding
 		# Form omnibus dissimilarity matrix
 		M <- omnibusM(D1, D2, L)
-		init.conf<-NULL
+    
+		init.conf<-pom.config
 		
-		if (compare.pom.cca) init.conf<- pom.config
+	
 		
 		# Embed in-sample using different weight matrices (differentw values)
 		X.embeds<-JOFC.Fid.Commens.Tradeoff(M,d,w.vals,separability.entries.w,init.conf=init.conf,wt.equalize=wt.equalize)
@@ -738,42 +809,23 @@ run.jofc <- function(D1, D2, D10A,D20,D2A,
 			Y2At<-Y.At[m+(1:m),]
 			
 			
-			X2tp<-pom.config[n+(1:n),]
-			X1t<-pom.config[(1:n),]
-			
-			X.0<-rbind(X1t,X2tp)
-			X.a<-X[1:n,]
-			X.b<-X[n+(1:n),]
-			mean.a <- colMeans(X.a)
-			mean.b <- colMeans(X.b)
-			#	means[l,]<- c(mean.a,mean.b)
-			proc.pom2JOFC <- MCMCpack::procrustes(X,X.0,dilation=FALSE,translation=TRUE)
-			#proc.pom2JOFC.a <- MCMCpack::procrustes(X.a,X1t,dilation=FALSE,translation=TRUE)
-			
-			#proc.pom2JOFC.b <- MCMCpack::procrustes(X.b,X2tp,dilation=FALSE,translation=TRUE)
-			#X.c<-rbind(X.a-mean.a,X.b-mean.b)
-			#proc.pom2JOFC.a <- MCMCpack::procrustes(X.c,X.0,dilation=FALSE,translation=TRUE)
-			
-			config.mismatch$frob.norm[l] <- norm (proc.pom2JOFC$X.new-X.0,'F')
-			#config.mismatch[l,2] <- norm (proc.pom2JOFC.a$X.new-X.0,'F')
-			#config.mismatch[l,3] <- norm (proc.pom2JOFC.b$X.new-X2tp,'F')
-			
-			
-			#	if (verbose) print(means[l,])
-			
-			
-			
+
 			
 			T0[l,] <- rowSums((Y1t - Y2t)^2)
 			TA[l,] <- rowSums((Y1t.A - Y2At)^2)
 			}
+			
 			
 	
 	
 }
 
 
-return(list(T0=T0,TA=TA))
+return(list(T0=T0,TA=TA,
+              Fid.Err.Term.1=Fid.Err.Term.1 ,		Fid.Err.Term.2=Fid.Err.Term.2,  Comm.Err.Term=Comm.Err.Term  ,  	  		
+		Fid.Err.Sum.Term.1 = Fid.Err.Sum.Term.1 ,		Fid.Err.Sum.Term.2 = Fid.Err.Sum.Term.2 ,		Comm.Err.Sum.Term  =Comm.Err.Sum.Term  , 
+		FC.ratio = FC.ratio ,		FC.ratio.2 =FC.ratio.2 ,		FC.ratio.3 = FC.ratio.3
+            ))
 
 }
 
@@ -1387,3 +1439,22 @@ omnibusM.inoos <- function(D1, D2, W)
 	W <- as.matrix(W)
 	rbind(cbind(D1, W), cbind(W, D2))
 }
+The.mode <- function(x, show_all_modes = F) 
+{ 
+ x_freq <- table(x) 
+ mode_location <- which.max(x_freq) 
+ The_mode <- names(x_freq)[mode_location] 
+ Number_of_modes <- length(mode_location) 
+ # 
+ if(show_all_modes) { 
+  if(Number_of_modes >1) { 
+   warning(paste("Multiple modes exist - returning all",Number_of_modes,"of 
+them"))} 
+  return(The_mode) 
+ } else { 
+  if(Number_of_modes >1) { 
+   warning(paste("Multiple modes exist - returning only the first one out 
+of", Number_of_modes))} 
+  return(The_mode[1]) 
+ } 
+} 

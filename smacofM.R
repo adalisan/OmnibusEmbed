@@ -1,3 +1,7 @@
+#
+# Embedding in-sample with weighted raw-stress criterion
+#
+
 smacofM <- function(D,
                     ndim    = 2,
                     W       = NULL,

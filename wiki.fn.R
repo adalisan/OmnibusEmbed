@@ -1,13 +1,5 @@
 ## Time-stamp: <wiki.fn.R zma 2010-03-03 18:40>
 
-
-omnibusM <- function(D1, D2, W)
-{
-	D1 <- as.matrix(D1)
-	D2 <- as.matrix(D2)
-	W <- as.matrix(W)
-	rbind(cbind(D1, W), cbind(W, D2))
-}
 get.a2 <- function(M, newObs, method="average") {
   ## get the vector a2 used for out-of-sample embedding
   N <- nrow(M)/2
