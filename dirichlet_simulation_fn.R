@@ -149,7 +149,7 @@ dirichlet_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 		F.bar.to.C.bar.ratio <- rbind(F.bar.to.C.bar.ratio,mc.run$F.bar.to.C.bar.ratio)
     
     
-	  optim.power.vec[mc,]<- mc.run$optim.power
+	  optim.power.vec[mc,]<- rep(0,len)
     best.w.vals[mc] <- mc.run$best.w
 		
 		
