@@ -200,7 +200,7 @@ run.mc.replicate<-function(model,p, r, q, c.val,
         regCCA.teststats<-run.reg.cca(D1, D2, D10A,D20,D2A,
 				  p,q,d,c.val,
           pprime1,pprime2,
-	
+	        d.super,
 				n,m,
 			
 				model,oos,
@@ -208,7 +208,8 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 				verbose)		
       
     }
-    
+	}
+
     
 		
 }
@@ -534,8 +535,9 @@ run.cca<-function(D1, D2, D10A,D20,D2A,
 run.reg.cca<-function(D1, D2, D10A,D20,D2A,
 				p,q,d,c.val,
         pprime1,pprime2,
+        d.super=floor((d+p+q*as.numeric(c.val>0))/2),
 				n,m,
-				model,oos,proc.dilation,
+				model,oos,
 				verbose){
 					
 									
@@ -548,19 +550,16 @@ run.reg.cca<-function(D1, D2, D10A,D20,D2A,
 		## ==== cca ====
 		#embed in-sample measurements
 		if (oos == TRUE) {
-			if (c.val==0){
+			
 				if (model=="gaussian"){
 					
-					X1t <- smacofM(D1,ndim = floor((d+p)/2),verbose=FALSE)
-					X2t <- smacofM(D2,ndim = floor((d+p)/2),verbose=FALSE)
+					X1t <- smacofM(D1,ndim =d.super,verbose=FALSE)
+					X2t <- smacofM(D2,ndim =d.super,verbose=FALSE)
 				} else{
-					X1t <- smacofM(D1,ndim = floor((d+p)/2)+1,verbose=TRUE)		
-					X2t <- smacofM(D2,ndim = floor((d+p)/2)+1,verbose=FALSE)
+					X1t <- smacofM(D1,ndim = d.super+1,verbose=TRUE)		
+					X2t <- smacofM(D2,ndim = d.super+1,verbose=FALSE)
 				}
-			} else{
-				X1t <- smacofM(D=D1,ndim= floor((d+p)/2)+1,verbose=FALSE)
-				X2t <- smacofM(D=D2,ndim= floor((d+p)/2)+1,verbose=FALSE)
-			}
+			
 			
 			xcca <- cancor(X1t, X2t)
 			
@@ -575,35 +574,31 @@ run.reg.cca<-function(D1, D2, D10A,D20,D2A,
 		} else {
 			if (c.val==0){
 				if (model=="gaussian"){
-					X1t <- smacofM(D10A, ndim=floor((d+p)/2),verbose=FALSE)
+					X1t <- smacofM(D10A, ndim=d.super,verbose=FALSE)
 					D20A <-dist(rbind(X2, Y20, Y2A))
-					X2t <- smacofM(D20A, ndim=floor((d+p)/2),verbose=FALSE)
+					X2t <- smacofM(D20A, ndim=d.super,verbose=FALSE)
 				}
 				else{
-					X1t <- smacofM(D10A, ndim= floor((d+p)/2)+1,verbose=FALSE)
+					X1t <- smacofM(D10A, ndim= d.super+1,verbose=FALSE)
 					D20A <-dist(rbind(X2, Y20, Y2A))
-					X2t <- smacofM(D20A, ndim= floor((d+p)/2)+1,verbose=FALSE)
+					X2t <- smacofM(D20A, ndim= d.super+1,verbose=FALSE)
 					
 					
 				}
 			} else{
 				if (model=="gaussian"){
-					pprime1 <- p+q
-					pprime2 <- p+q
+					pprime1 <- d.super
+					pprime2 <- d.super
 				}
 				else{
-					pprime1 <- p+q+2
-					pprime2 <- p+q+2
+					pprime1 <- d.super+2
+					pprime2 <- d.super+2
 					
 				}
 				X1t <- smacofM(D10A, ndim=pprime1,verbose=FALSE,init=cmdscale(D10A,pprime1))
 				D20A <-dist(rbind(X2, Y20, Y2A))
-				X2t <- smacofM(D20A, ndim=pprime2,verbose=FALSE,init=cmdscale(D20A,pprime2))
-				
-				
-			}
-			
-			
+				X2t <- smacofM(D20A, ndim=pprime2,verbose=FALSE,init=cmdscale(D20A,pprime2))								
+			}						
 			if (verbose) print("CCA embedding complete\n")
 			center1 <- colMeans(X1t[1:n, ])   # column means of training obs
 			center2 <- colMeans(X2t[1:n, ])
