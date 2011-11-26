@@ -523,15 +523,6 @@ run.mc.rep.with.seed <-function(seed){
 		
 		seeds[[mc]]<-list(.Random.seed)
 		
-run.mc.replicate<-function(model,p, r, q, c.val,
-  	d           = p-1,
-		pprime1     = ifelse(model=="gaussian",p+q,p+q+2),   # cca arguments , signal+noise dimension
-		pprime2     = ifelse(model=="gaussian",p+q,p+q+2),   # cca arguments, signal+noise dimension
-		Wchoice     = "avg", #How to impute L
-		pre.scaling = TRUE,  #Make the measurement spaces have the same scale
-		oos         = TRUE,  #embed test observations by Out-of-sampling  ?
-		alpha       = NULL,  
-		n = 100, m = 100,    #Number of training and test observations
 
 		print("Running run.mc.replicate function")
 		tmp<- run.mc.replicate("gaussian",p, r, q, c.val,  ##try(
