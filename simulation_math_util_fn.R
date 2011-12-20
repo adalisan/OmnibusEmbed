@@ -305,11 +305,11 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 		D2<-D2*s
 		
 		
-			D.oos.1<-dist(Y1)
+		D.oos.1<-dist(Y1)
 		D.oos.2.null <- dist(Y20)
 		D.oos.2.alt <- dist(Y2A)
 		ideal.omnibus.0  <- as.matrix(dist(rbind(X1,X2,Y1,Y20)))
-			ideal.omnibus.A  <- as.matrix(dist(rbind(X1,X2,Y1,Y2A)))
+		ideal.omnibus.A  <- as.matrix(dist(rbind(X1,X2,Y1,Y2A)))
 	
 	     JOFC.results <-run.jofc(D1, D2, D10A,D20,D2A,
 					D.oos.1,
@@ -322,7 +322,7 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 				n,m,
 				d,c.val,
 				model,oos,Wchoice,separability.entries.w,wt.equalize,assume.matched.for.oos,oos.use.imputed,
-        compare.pom.cca =TRUE,
+        		compare.pom.cca =TRUE,
 				w.vals=c(rival.w,def.w),
 				verbose)
 				
@@ -673,7 +673,7 @@ run.jofc <- function(D1, D2, D10A,D20,D2A,
 	
 		
 		# Embed in-sample using different weight matrices (differentw values)
-		X.embeds<-JOFC.Fid.Commens.Tradeoff(M,d,w.vals,separability.entries.w,init.conf=init.conf,wt.equalize=wt.equalize)
+		X.embeds<-JOFC.Insample.Embed(M,d,w.vals,separability.entries.w,init.conf=init.conf,wt.equalize=wt.equalize)
 		
 		Fid.Err.Term.1 <- X.embeds[[w.max.index+2]]
 		Fid.Err.Term.2 <- X.embeds[[w.max.index+3]]
@@ -859,7 +859,7 @@ w.val.to.W.mat<-function(w,n,sep.err.w,wt.equalize){
 
 
 
-JOFC.Fid.Commens.Tradeoff <-function(D,ndimens,w.vals,sep.err.w,init.conf,wt.equalize){
+JOFC.Insample.Embed <-function(D,ndimens,w.vals,sep.err.w,init.conf,wt.equalize){
 #	if (profile.mode) Rprof("JOFC.FC.out",append=TRUE)
 	n<- nrow(D)
 	smacof.embed<-list()
