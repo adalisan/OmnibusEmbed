@@ -47,11 +47,12 @@ jofc<-function(G,Gp,
 		use.weighted.graph=TRUE,
 		wt.matrix.1=NULL,
 		wt.matrix.2=NULL,
-		sep.graphs=TRUE # if TRUE, treat two graphs separately to compute dissimilarities
+		sep.graphs=TRUE, # if TRUE, treat two graphs separately to compute dissimilarities
 #and impute W (off-diagonalblock matrix)
 # if FALSE, join the graphs and compute dissimilarities from joint graph
+		use.diff.distance=FALSE
 ){
-	
+	dist.fun<- ifelse(use.diff.distance,diff.dist.fun,shortest.paths)
 	n<-nrow(G)
 	graph.mode<- ifelse(graph.is.directed,"directed","undirected")
 	
@@ -77,19 +78,20 @@ jofc<-function(G,Gp,
 		diag(A.M) <- matched.cost
 		if (is.null(wt.matrix.1)){
 			#Given adjacency matrix, generate weighted graph
-			G.w <- G
-			Gp.w <- Gp
-			G.w[G==0] <- notconnect.wt
+			wt.matrix.1 <- G
+			wt.matrix.2<- Gp
+			wt.matrix.1[G==0] <- notconnect.wt
+			wt.matrix.2[Gp==0] <- notconnect.wt
 			
-			Gp.w[Gp==0] <- notconnect.wt
-			G.w[G==1] <- notconnect.wt/10
 			
-			Gp.w[Gp==1] <- notconnect.wt/10
-			G.comb.w<-omnibusM(G.w,Gp.w,A.M)
+			wt.matrix.1[G==1] <- notconnect.wt/10
+			
+			wt.matrix.2[Gp==1] <- notconnect.wt/10
+			G.comb.w<-omnibusM(wt.matrix.1,wt.matrix.2,A.M)
 			
 			if (sep.graphs){
-			Graph.1<-graph.adjacency(G.w, weighted= TRUE , mode=graph.mode)
-			Graph.2<-graph.adjacency(Gp.w,weighted= TRUE , mode=graph.mode)
+				Graph.1<-graph.adjacency(wt.matrix.1, weighted= TRUE , mode=graph.mode)
+				Graph.2<-graph.adjacency(wt.matrix.2,weighted= TRUE , mode=graph.mode)
 			}
 			else{
 				Graph.M <- graph.adjacency(G.comb.w,weighted= TRUE ,
@@ -99,24 +101,25 @@ jofc<-function(G,Gp,
 		}
 		else{
 			if (sep.graphs){
-			#Given weight matrix, generate weighted graph                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
-			Graph.1<-graph.adjacency(wt.matrix.1 ,weighted=TRUE,mode= graph.mode)
-			Graph.2<-graph.adjacency(wt.matrix.2,weighted=TRUE,mode=graph.mode)
-			
+				#Given weight matrix, generate weighted graph                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+				Graph.1<-graph.adjacency(wt.matrix.1 ,weighted=TRUE,mode= graph.mode)
+				Graph.2<-graph.adjacency(wt.matrix.2,weighted=TRUE,mode=graph.mode)
+				
 				#Don't need to compute Graph.M
 				
 			}
 			else{
-			Graph.M<-graph.adjacency(omnibusM(wt.matrix.1,wt.matrix.2,(wt.matrix.1+wt.matrix.2)/2),
-					                   weighted=TRUE,mode=graph.mode)
+				Graph.M<-graph.adjacency(omnibusM(wt.matrix.1,wt.matrix.2,(wt.matrix.1+wt.matrix.2)/2),
+						weighted=TRUE,mode=graph.mode)
 			}
 		}
 		
 	}
 	
-
+	
 	
 	if (sep.graphs){
+		
 		#compute dissimilarities in separate graphs, then impute dissimilarity between different condition
 		D.1<-shortest.paths(Graph.1)
 		D.2<-shortest.paths(Graph.2)
@@ -136,11 +139,7 @@ jofc<-function(G,Gp,
 	#print(max(D.M))
 	
 	
-	params<-list(d=d.dim,
-			wt.equalize=FALSE,
-			separability.entries.w=FALSE,
-			assume.matched.for.oos = FALSE)
-
+	
 	oos <- TRUE
 	
 	Embed.List<-Embed.Nodes(D.M,  in.sample.ind ,oos ,
@@ -150,7 +149,7 @@ jofc<-function(G,Gp,
 			assume.matched.for.oos = FALSE)	
 	J<-matrix()
 	for (Y.embed in Embed.List){
-		Loc.Embed <-Y.embed
+		
 		print("dim(Y.embed)")
 		print(dim(Y.embed))
 		test.samp.size<-nrow(Y.embed)/2
@@ -158,13 +157,87 @@ jofc<-function(G,Gp,
 		print("Dist")
 		print(dim(dist(Y.embed)))
 		
-		#list(loc=Loc.Embed,dist=Dist)
+		
 		J<-Dist
 		
 	}
 	return(J)
 	
 }
+
+
+
+jofc.diffusion.dist<-function(G,Gp,
+		in.sample.ind,
+		d.dim,
+		graph.is.directed=FALSE,
+		notconnect.wt=10,
+		use.weighted.graph=TRUE,
+		wt.matrix.1=NULL,
+		wt.matrix.2=NULL,
+		sep.graphs=TRUE # if TRUE, treat two graphs separately to compute dissimilarities
+#and impute W (off-diagonalblock matrix)
+# if FALSE, join the graphs and compute dissimilarities from joint graph
+
+){
+	n<-nrow(G)
+	graph.mode<- ifelse(graph.is.directed,"directed","undirected")
+	
+	
+	if (sep.graphs){
+		if (is.null(wt.matrix.1)){
+			D.1<-diff.dist.fun(G)
+			D.2<-diff.dist.fun(Gp)
+		} else{
+			D.1<-diff.dist.fun(wt.matrix.1)
+			D.2<-diff.dist.fun(wt.matrix.2)
+		}
+		D.w<- (D.1+D.2)/2
+		
+		D.M<- omnibusM(D.1,D.2,D.w)
+	}
+	else{
+		if (is.null(wt.matrix.1)){
+			A.M<- diag(n)
+			G.comb<-omnibusM(G,Gp,A.M)
+			#compute dissimilarities in joint graph
+			D.M<-diff.dist.fun(G.comb)
+			D.M[is.infinite(D.M)]<-1E10
+		} else{
+			
+			Wt.M<-omnibusM(wt.matrix.1,wt.matrix.2,(wt.matrix.1+wt.matrix.2)/2))
+			D.M<-diff.dist.fun(G.comb)
+		}
+		
+	}
+	
+	
+	oos <- TRUE
+	
+	Embed.List<-Embed.Nodes(D.M,  in.sample.ind ,oos ,
+			d=d.dim,
+			wt.equalize=FALSE,
+			separability.entries.w=FALSE,
+			assume.matched.for.oos = FALSE)	
+	J<-matrix()
+	for (Y.embed in Embed.List){
+
+		test.samp.size<-nrow(Y.embed)/2
+		Dist=as.matrix(dist(Y.embed))[1:test.samp.size,(1:test.samp.size)+test.samp.size]
+		J<-Dist
+		
+	}
+	return(J)
+	
+}
+
+
+
+
+
+
+
+
 
 Embed.Nodes <-function(D.omnibus,in.sample.ind,oos, d=d.dim,
 		wt.equalize=FALSE,
@@ -310,3 +383,13 @@ adj.Mat.2.P<-function(A){
 diff.dist<-function(P){
 	eig(P)
 }
+
+
+diff.dist.fun<-function(A){
+	P<-transition.matrix(A)
+	D<-diffusion.distance(P, T.diff, directed = FALSE)
+	D
+}
+
+
+
