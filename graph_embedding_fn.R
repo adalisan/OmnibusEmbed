@@ -171,8 +171,8 @@ jofc.diffusion.dist<-function(G,Gp,
 		in.sample.ind,
 		d.dim,
 		graph.is.directed=FALSE,
-		notconnect.wt=10,
-		use.weighted.graph=TRUE,
+
+	
 		wt.matrix.1=NULL,
 		wt.matrix.2=NULL,
 		sep.graphs=TRUE # if TRUE, treat two graphs separately to compute dissimilarities
@@ -195,8 +195,8 @@ jofc.diffusion.dist<-function(G,Gp,
 		D.w<- (D.1+D.2)/2
 		
 		D.M<- omnibusM(D.1,D.2,D.w)
-	}
-	else{
+    print(D.M)
+	}	else{
 		if (is.null(wt.matrix.1)){
 			A.M<- diag(n)
 			G.comb<-omnibusM(G,Gp,A.M)
@@ -205,8 +205,9 @@ jofc.diffusion.dist<-function(G,Gp,
 			D.M[is.infinite(D.M)]<-1E10
 		} else{
 			
-			Wt.M<-omnibusM(wt.matrix.1,wt.matrix.2,(wt.matrix.1+wt.matrix.2)/2))
+			Wt.M<-omnibusM(wt.matrix.1,wt.matrix.2,(wt.matrix.1+wt.matrix.2)/2)
 			D.M<-diff.dist.fun(G.comb)
+      D.M[is.infinite(D.M)]<-1E10
 		}
 		
 	}
@@ -239,7 +240,7 @@ jofc.diffusion.dist<-function(G,Gp,
 
 
 
-Embed.Nodes <-function(D.omnibus,in.sample.ind,oos, d=d.dim,
+Embed.Nodes <-function(D.omnibus,in.sample.ind,oos, d,
 		wt.equalize=FALSE,
 		separability.entries.w=FALSE,
 		assume.matched.for.oos = FALSE ){
@@ -386,7 +387,7 @@ diff.dist<-function(P){
 
 
 diff.dist.fun<-function(A){
-	P<-transition.matrix(A)
+	P<-transition.matrix(A,dissimilarity=FALSE)
 	D<-diffusion.distance(P, T.diff, directed = FALSE)
 	D
 }
