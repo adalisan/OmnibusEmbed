@@ -65,7 +65,8 @@ jofc<-function(G,Gp,
 		print("Using adjacency for computing dissimilarities")
 		Graph.1<-graph.adjacency(G, mode=graph.mode)
 		Graph.2<-graph.adjacency(Gp,mode=graph.mode)
-		A.M<- diag(n)
+    A.M<- diag(n)
+    A.M[!in.sample.ind[1:n]]<- 0
 		G.comb<-omnibusM(G,Gp,A.M)
 		Graph.M <- graph.adjacency(G.comb,
 				weighted= NULL ,mode=graph.mode)
@@ -75,8 +76,11 @@ jofc<-function(G,Gp,
 		# make the weight matrix from adjacency matrix. Those with same-condition edges have weights of wt.connect/10
 		#those  with no edges have weights of wt.connect. Those with "matched edges has weights of matched.cost
 		A.M<- matrix(500,n,n)
+    
 		diag(A.M) <- matched.cost
-		if (is.null(wt.matrix.1)){
+		
+     A.M[!in.sample.ind[1:n]]<- 0
+    if (is.null(wt.matrix.1)){
 			#Given adjacency matrix, generate weighted graph
 			wt.matrix.1 <- G
 			wt.matrix.2 <- Gp
@@ -226,19 +230,18 @@ jofc.diffusion.dist<-function(G,Gp,
 		D.w<- (D.1+D.2)/2
 		
 		D.M<- omnibusM(D.1,D.2,D.w)
-    print(D.M)
-	}	else{
+    	}	else{
 		if (is.null(wt.matrix.1)){
 			A.M<- diag(n)
 			G.comb<-omnibusM(G,Gp,A.M)
 			#compute dissimilarities in joint graph
 			D.M<-diff.dist.fun(G.comb)
-			D.M[is.infinite(D.M)]<-1E10
+			D.M[is.infinite(D.M)]<-NA
 		} else{
 			
 			Wt.M<-omnibusM(wt.matrix.1,wt.matrix.2,(wt.matrix.1+wt.matrix.2)/2)
 			D.M<-diff.dist.fun(Wt.M)
-      D.M[is.infinite(D.M)]<-1E10
+                 D.M[is.infinite(D.M)]<-NA
 		}
 		
 	}
