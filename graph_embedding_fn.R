@@ -47,12 +47,12 @@ jofc<-function(G,Gp,
 		use.weighted.graph=TRUE,
 		wt.matrix.1=NULL,
 		wt.matrix.2=NULL,
-		sep.graphs=TRUE, # if TRUE, treat two graphs separately to compute dissimilarities
+		sep.graphs=TRUE # if TRUE, treat two graphs separately to compute dissimilarities
 #and impute W (off-diagonalblock matrix)
 # if FALSE, join the graphs and compute dissimilarities from joint graph
-		use.diff.distance=FALSE
+	    
 ){
-	dist.fun<- ifelse(use.diff.distance,diff.dist.fun,shortest.paths)
+	
 	n<-nrow(G)
 	graph.mode<- ifelse(graph.is.directed,"directed","undirected")
 	
@@ -79,13 +79,10 @@ jofc<-function(G,Gp,
 		if (is.null(wt.matrix.1)){
 			#Given adjacency matrix, generate weighted graph
 			wt.matrix.1 <- G
-			wt.matrix.2<- Gp
+			wt.matrix.2 <- Gp
 			wt.matrix.1[G==0] <- notconnect.wt
-			wt.matrix.2[Gp==0] <- notconnect.wt
-			
-			
-			wt.matrix.1[G==1] <- notconnect.wt/10
-			
+			wt.matrix.2[Gp==0] <- notconnect.wt						
+			wt.matrix.1[G==1] <- notconnect.wt/10			
 			wt.matrix.2[Gp==1] <- notconnect.wt/10
 			G.comb.w<-omnibusM(wt.matrix.1,wt.matrix.2,A.M)
 			
@@ -94,12 +91,21 @@ jofc<-function(G,Gp,
 				Graph.2<-graph.adjacency(wt.matrix.2,weighted= TRUE , mode=graph.mode)
 			}
 			else{
-				Graph.M <- graph.adjacency(G.comb.w,weighted= TRUE ,
+				Graph.1<-graph.adjacency(wt.matrix.1, weighted= TRUE, mode=graph.mode)
+				Graph.2<-graph.adjacency(wt.matrix.2,  weighted= TRUE, mode=graph.mode)
+			
+				ind.vec<-c(rep(TRUE,n),in.sample.ind[n+(1:n)])
+				
+				Graph.M.1 <- graph.adjacency(G.comb.w[ind.vec,ind.vec],weighted= TRUE ,
+						mode=graph.mode)
+				ind.vec<-c(in.sample.ind[(1:n)],rep(TRUE,n))
+				Graph.M.2 <- graph.adjacency(G.comb.w[ind.vec,ind.vec],weighted= TRUE ,
 						mode=graph.mode)
 				
 			}
 		}
-		else{
+		else{  #if wt.matrix.1 is not null
+			
 			if (sep.graphs){
 				#Given weight matrix, generate weighted graph                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
 				Graph.1<-graph.adjacency(wt.matrix.1 ,weighted=TRUE,mode= graph.mode)
@@ -109,31 +115,61 @@ jofc<-function(G,Gp,
 				
 			}
 			else{
-				Graph.M<-graph.adjacency(omnibusM(wt.matrix.1,wt.matrix.2,(wt.matrix.1+wt.matrix.2)/2),
-						weighted=TRUE,mode=graph.mode)
+				G.comb.w<-omnibusM(wt.matrix.1,wt.matrix.2,A.M)
+				Graph.1<-graph.adjacency(wt.matrix.1,weighted= TRUE, mode=graph.mode)
+				Graph.2<-graph.adjacency(wt.matrix.2,weighted= TRUE,mode=graph.mode)
+			   Graph.M<-graph.adjacency(G.comb.w,weighted= TRUE ,
+						mode=graph.mode)
+				ind.vec<-c(rep(TRUE,n),in.sample.ind[n+(1:n)])
+				
+		
+				Graph.M.1 <- graph.adjacency(G.comb.w[ind.vec,ind.vec],weighted= TRUE ,
+						mode=graph.mode)
+				ind.vec<-c(in.sample.ind[(1:n)],rep(TRUE,n))
+				Graph.M.2 <- graph.adjacency(G.comb.w[ind.vec,ind.vec],weighted= TRUE ,
+						mode=graph.mode)
 			}
 		}
 		
 	}
 	
-	
+	#Now that graphs are generated from adjacency or weight matrices,
+	# compute dissimilarities using shortest.paths	
 	
 	if (sep.graphs){
 		
 		#compute dissimilarities in separate graphs, then impute dissimilarity between different condition
 		D.1<-shortest.paths(Graph.1)
 		D.2<-shortest.paths(Graph.2)
-		D.1[is.infinite(D.1)]<-1E10
-		D.2[is.infinite(D.2)]<-1E10
+		D.1[is.infinite(D.1)]<-NA
+		D.2[is.infinite(D.2)]<-NA
 		D.w<- (D.1+D.2)/2#mapply(min,D.1,D.2)
 		
 		D.M<- omnibusM(D.1,D.2,D.w)
 		
 	}
 	else{
+		D.1<-shortest.paths(Graph.1)
+		D.2<-shortest.paths(Graph.2)
+		
+		
+		D.M.1<-shortest.paths(Graph.M.1)
+		D.M.2<-shortest.paths(Graph.M.2)
+		
+		ind.vec<-c(rep(TRUE,n),in.sample.ind[n+(1:n)])
+		D.M[ind.vec,ind.vec] <- D.M.1
+		ind.vec<-c(in.sample.ind[(1:n)],rep(TRUE,n))
+		D.M[ind.vec,ind.vec] <- D.M.2
+		
+		
+		
+		ind.vec<-c(in.sample.ind[(1:n)],rep(FALSE,n))
+		D.M[ind.vec,ind.vec] <- D.1[in.sample.ind[(1:n)],in.sample.ind[(1:n)]]
+		ind.vec<-c(rep(FALSE,n),in.sample.ind[n+(1:n)])
+		D.M[ind.vec,ind.vec] <- D.2[in.sample.ind[(1:n)],in.sample.ind[(1:n)]]
 		#compute dissimilarities in joint graph
-		D.M<-shortest.paths(Graph.M)
-		D.M[is.infinite(D.M)]<-1E10
+		
+		D.M[is.infinite(D.M)]<-NA
 	}
 	#print("max(D.M)")
 	#print(max(D.M))
@@ -150,14 +186,9 @@ jofc<-function(G,Gp,
 	J<-matrix()
 	for (Y.embed in Embed.List){
 		
-		print("dim(Y.embed)")
-		print(dim(Y.embed))
 		test.samp.size<-nrow(Y.embed)/2
 		Dist=as.matrix(dist(Y.embed))[1:test.samp.size,(1:test.samp.size)+test.samp.size]
-		print("Dist")
-		print(dim(dist(Y.embed)))
-		
-		
+				
 		J<-Dist
 		
 	}
@@ -206,7 +237,7 @@ jofc.diffusion.dist<-function(G,Gp,
 		} else{
 			
 			Wt.M<-omnibusM(wt.matrix.1,wt.matrix.2,(wt.matrix.1+wt.matrix.2)/2)
-			D.M<-diff.dist.fun(G.comb)
+			D.M<-diff.dist.fun(Wt.M)
       D.M[is.infinite(D.M)]<-1E10
 		}
 		
@@ -257,7 +288,10 @@ Embed.Nodes <-function(D.omnibus,in.sample.ind,oos, d,
 		n<-sum(in.sample.ind)/2
 		test.samp.size<-sum(!in.sample.ind)/2
 		D.in <- D.omnibus[in.sample.ind,in.sample.ind]
-		init.conf<-cmdscale(d=D.in,k=d)
+		init.conf=NULL
+		if (sum(is.na(D.in))==0) {		
+				init.conf<-cmdscale(d=D.in,k=d)
+		}	
 		
 		
 		
@@ -344,7 +378,7 @@ solveMarriage<- function(Dist){
 	
 }
 
-present<-function(matches){
+present<-function(M){
 	true.pairings<-0
 	pair.names<-levels(M)
 	num.pairs<-length(pair.names)
