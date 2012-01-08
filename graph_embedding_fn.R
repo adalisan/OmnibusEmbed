@@ -43,7 +43,8 @@ jofc<-function(G,Gp,
 		in.sample.ind,
 		d.dim,
 		graph.is.directed=FALSE,
-		notconnect.wt=10,
+		oos=TRUE,
+    notconnect.wt=10,
 		use.weighted.graph=TRUE,
 		wt.matrix.1=NULL,
 		wt.matrix.2=NULL,
@@ -179,9 +180,6 @@ jofc<-function(G,Gp,
 	#print(max(D.M))
 	
 	
-	
-	oos <- TRUE
-	
 	Embed.List<-Embed.Nodes(D.M,  in.sample.ind ,oos ,
 			d=d.dim,
 			wt.equalize=FALSE,
@@ -206,7 +204,7 @@ jofc.diffusion.dist<-function(G,Gp,
 		in.sample.ind,
 		d.dim,
 		graph.is.directed=FALSE,
-
+    oos=TRUE,
 	
 		wt.matrix.1=NULL,
 		wt.matrix.2=NULL,
@@ -232,7 +230,7 @@ jofc.diffusion.dist<-function(G,Gp,
 		D.M<- omnibusM(D.1,D.2,D.w)
     	}	else{
 		if (is.null(wt.matrix.1)){
-			A.M<- diag(n)
+			 A.M[!in.sample.ind[1:n]]<- 0
 			G.comb<-omnibusM(G,Gp,A.M)
 			#compute dissimilarities in joint graph
 			D.M<-diff.dist.fun(G.comb)
@@ -247,7 +245,6 @@ jofc.diffusion.dist<-function(G,Gp,
 	}
 	
 	
-	oos <- TRUE
 	
 	Embed.List<-Embed.Nodes(D.M,  in.sample.ind ,oos ,
 			d=d.dim,
@@ -257,8 +254,8 @@ jofc.diffusion.dist<-function(G,Gp,
 	J<-matrix()
 	for (Y.embed in Embed.List){
 
-		test.samp.size<-nrow(Y.embed)/2
-		Dist=as.matrix(dist(Y.embed))[1:test.samp.size,(1:test.samp.size)+test.samp.size]
+		test.m<-nrow(Y.embed)/2
+		Dist=as.matrix(dist(Y.embed))[1:test.m,(1:test.m)+test.m]
 		J<-Dist
 		
 	}
@@ -274,7 +271,10 @@ jofc.diffusion.dist<-function(G,Gp,
 
 
 
-Embed.Nodes <-function(D.omnibus,in.sample.ind,oos, d,
+Embed.Nodes <-function(D.omnibus,
+                       in.sample.ind,
+                       oos, 
+                       d,
 		wt.equalize=FALSE,
 		separability.entries.w=FALSE,
 		assume.matched.for.oos = FALSE ){
@@ -283,13 +283,13 @@ Embed.Nodes <-function(D.omnibus,in.sample.ind,oos, d,
 	Y.embeds<-list()
 	oos.use.imputed<- FALSE
 	w.max.index<-length(w.vals)
-	
+	  n<-sum(in.sample.ind)/2
+		test.m<-sum(!in.sample.ind)/2
 	#in.sample.ind<-which(in.sample.ind)
 	
 	# Embed in-sample using different weight matrices (differentw values)
 	if (oos){	
-		n<-sum(in.sample.ind)/2
-		test.samp.size<-sum(!in.sample.ind)/2
+	
 		D.in <- D.omnibus[in.sample.ind,in.sample.ind]
 		init.conf=NULL
 		if (sum(is.na(D.in))==0) {		
@@ -319,15 +319,15 @@ Embed.Nodes <-function(D.omnibus,in.sample.ind,oos, d,
 			
 			
 			#Compute Weight matrix corresponding OOS  entries
-			oos.Weight.mat.2<-w.val.to.W.mat(w.val.l,(2*test.samp.size),separability.entries.w,wt.equalize)
+			oos.Weight.mat.2<-w.val.to.W.mat(w.val.l,(2*test.m),separability.entries.w,wt.equalize)
 			
 			# If assume.matched.for.oos is true, we assume OOS dissimilarities are matched(in reality,
 			# they are matched for the matched pairs, but unmatched for the unmatched pairs)
 			# If assume.matched.for.oos is true, we ignore the dissimilarities between matched/unmatched 
 			# pairs
 			if (!assume.matched.for.oos){
-				oos.Weight.mat.2[1:test.samp.size,test.samp.size+(1:test.samp.size)]<-0
-				oos.Weight.mat.2[test.samp.size+(1:test.samp.size),(1:test.samp.size)]<-0
+				oos.Weight.mat.2[1:test.m,test.m+(1:test.m)]<-0
+				oos.Weight.mat.2[test.m+(1:test.m),(1:test.m)]<-0
 			}
 			
 			
@@ -335,10 +335,10 @@ Embed.Nodes <-function(D.omnibus,in.sample.ind,oos, d,
 			# from different conditions like fidelity terms
 			# otherwise they are ignored
 			if (oos.use.imputed){
-				oos.Weight.mat.w <- matrix(1-w.val.l,2*n,2*test.samp.size)
+				oos.Weight.mat.w <- matrix(1-w.val.l,2*n,2*test.m)
 			} else{
-				oos.Weight.mat.w <- rbind(cbind(matrix(1-w.val.l,n,test.samp.size), matrix(0,n,test.samp.size) ),
-						cbind(matrix(0,n,test.samp.size),matrix(1-w.val.l,n,test.samp.size))
+				oos.Weight.mat.w <- rbind(cbind(matrix(1-w.val.l,n,test.m), matrix(0,n,test.m) ),
+						cbind(matrix(0,n,test.m),matrix(1-w.val.l,n,test.m))
 				)
 			}
 			oos.Weight.mat<-omnibusM(oos.Weight.mat.1,oos.Weight.mat.2,oos.Weight.mat.w)
@@ -369,7 +369,62 @@ Embed.Nodes <-function(D.omnibus,in.sample.ind,oos, d,
 			Y.embeds<-c(Y.embeds,list(Y.0t))
 		}
 		
+	}  else{
+    
+    ind.vec.1<-c(in.sample.ind[1:(n+test.m)],rep(FALSE,n+test.m))  
+    ind.vec.2<-c(rep(FALSE,n+test.m),in.sample.ind[n+test.m+(1:(n+test.m))])
+    
+    ind.vec.3<-c(!in.sample.ind[1:(n+test.m)],rep(FALSE,n+test.m))  
+    ind.vec.4<-c(rep(FALSE,n+test.m),!in.sample.ind[n+test.m+(1:(n+test.m))])
+ 
+     
+    D1<- rbind(
+  				cbind(D.omnibus[ind.vec.1,ind.vec.1],D.omnibus[ind.vec.1,ind.vec.3]),
+					cbind(D.omnibus[ind.vec.3,ind.vec.1],D.omnibus[ind.vec.3,ind.vec.3])
+                )
+    
+    D2<- rbind(
+    			cbind(D.omnibus[ind.vec.2,ind.vec.2],D.omnibus[ind.vec.2,ind.vec.4]),
+  				cbind(D.omnibus[ind.vec.4,ind.vec.2],D.omnibus[ind.vec.4,ind.vec.4])
+    )
+    
+    
+    omnibus.D1.D2<- omnibusM(D1,D2,(D1+D2)/2)
+  		init.omnibus<-omnibus.D1.D2  
+      init.omnibus[2*n+test.m+(1:test.m),1:(n+test.m)]<-0    
+     init.omnibus[1:(n+test.m),2*n+test.m+(1:test.m)]<-0
+  
+      init.omnibus[n+test.m+(1:n),(n+1):(n+test.m)]<-0    
+      init.omnibus[(n+1):(n+test.m),n+test.m+(1:n)]<-0
+      
+      init.conf=NULL
+  	if (sum(is.na(omnibus.D1.D2))==0) {		
+				init.conf<-cmdscale(d=init.omnibus,k=d)
+		}
+    
+      W.Mat<-w.val.to.W.mat(w.vals[1],2*(n+test.m),separability.entries.w,wt.equalize)
+      W.Mat[2*n+test.m+(1:test.m),1:(n+test.m)]<-0  	
+      W.Mat[1:(n+test.m),2*n+test.m+(1:test.m)]<-0
+  
+      W.Mat[n+test.m+(1:n),(n+1):(n+test.m)]<-0    
+      W.Mat[(n+1):(n+test.m),n+test.m+(1:n)]<-0
+	
+	 
+      W.Mat[is.na(omnibus.D1.D2)]<-0
+		 omnibus.D1.D2[is.na(omnibus.D1.D2)] <-1
+		
+    omnibus.D1.D2[W.Mat==0] <- 20
+		new.embed <- smacofM (omnibus.D1.D2,
+                          ndim=d    ,	W=W.Mat        ,
+				init    = init.conf,
+				verbose = FALSE,
+				itmax   = 1000,
+				eps     = 1e-6)
+    
+    
+    Y.embeds<-c(Y.embeds,list(new.embed[!in.sample.ind,]))
 	}
+  
 	
 	Y.embeds
 	
