@@ -230,6 +230,7 @@ jofc.diffusion.dist<-function(G,Gp,
 		D.M<- omnibusM(D.1,D.2,D.w)
     	}	else{
 		if (is.null(wt.matrix.1)){
+			 A.M<- diag(n)
 			 A.M[!in.sample.ind[1:n]]<- 0
 			G.comb<-omnibusM(G,Gp,A.M)
 			#compute dissimilarities in joint graph
