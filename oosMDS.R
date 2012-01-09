@@ -1,5 +1,5 @@
 oosMDS <- function(D, X, w=c(rep(1, nrow(X)), rep(0, nrow(as.matrix(D))-nrow(X))),
-                   init = "random", itmax = 100) {
+                   init = "gower", itmax = 100) {
   ## Args:
   ##   D   : the full (n+k)x(n+k) distance matrix
   ##   X   : the within-sample (CMDS) embeddings
@@ -24,7 +24,7 @@ print(c(n,d,k,length(w)))
 
   if (init == "random") {
     require(MASS)
-    set.seed(12345)
+   # set.seed(12345)
     y0 <- matrix(mvrnorm(k, colMeans(X), diag(apply(X,2,var),ncol(X),ncol(X))))
   } else if (init == "gower") {
     diSq <- rowSums(X^2)

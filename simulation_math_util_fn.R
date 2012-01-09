@@ -30,7 +30,7 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 	print(paste("random ",runif(1)))
 	print("run.mc.replicate")
 	#
-	# The followin if statement is Not really necessary, unless we change our mind about rival.w being the best in every MC replicate
+	# The followin if statement is Not really necessary, unless we change our mind about rival.w being the best in average in every MC replicate
 	# and want to make rival.w a constant (preferably the best overall)
 	
 	if (is.null(rival.w)){
