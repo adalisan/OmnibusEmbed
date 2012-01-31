@@ -42,6 +42,7 @@ perturbG<-function(G,q){
 jofc<-function(G,Gp,
 		in.sample.ind,
 		d.dim,
+		w.vals.vec,
 		graph.is.directed=FALSE,
 		oos=TRUE,
     notconnect.wt=10,
@@ -67,7 +68,8 @@ jofc<-function(G,Gp,
 		Graph.1<-graph.adjacency(G, mode=graph.mode)
 		Graph.2<-graph.adjacency(Gp,mode=graph.mode)
     A.M<- diag(n)
-    A.M[!in.sample.ind[1:n]]<- 0
+    A.M[!in.sample.ind[1:n]]<- 0 # Make sure vertices that are NOT known to be matched
+								#are not connected
 		G.comb<-omnibusM(G,Gp,A.M)
 		Graph.M <- graph.adjacency(G.comb,
 				weighted= NULL ,mode=graph.mode)
@@ -93,10 +95,10 @@ jofc<-function(G,Gp,
 			
 			if (sep.graphs){
 				Graph.1<-graph.adjacency(wt.matrix.1, weighted= TRUE , mode=graph.mode)
-				Graph.2<-graph.adjacency(wt.matrix.2,weighted= TRUE , mode=graph.mode)
+				Graph.2<-graph.adjacency(wt.matrix.2, weighted= TRUE , mode=graph.mode)
 			}
 			else{
-				Graph.1<-graph.adjacency(wt.matrix.1, weighted= TRUE, mode=graph.mode)
+				Graph.1<-graph.adjacency(wt.matrix.1,  weighted= TRUE, mode=graph.mode)
 				Graph.2<-graph.adjacency(wt.matrix.2,  weighted= TRUE, mode=graph.mode)
 			
 				ind.vec<-c(rep(TRUE,n),in.sample.ind[n+(1:n)])
@@ -184,14 +186,15 @@ jofc<-function(G,Gp,
 			d=d.dim,
 			wt.equalize=FALSE,
 			separability.entries.w=FALSE,
-			assume.matched.for.oos = FALSE)	
-	J<-matrix()
+			assume.matched.for.oos = FALSE,
+			w.vals=w.vals.vec)	
+	J<-list()
 	for (Y.embed in Embed.List){
 		
 		test.samp.size<-nrow(Y.embed)/2
 		Dist=as.matrix(dist(Y.embed))[1:test.samp.size,(1:test.samp.size)+test.samp.size]
 				
-		J<-Dist
+		J<-c(J,list(Dist))
 		
 	}
 	return(J)
@@ -203,6 +206,7 @@ jofc<-function(G,Gp,
 jofc.diffusion.dist<-function(G,Gp,
 		in.sample.ind,
 		d.dim,
+		w.vals.vec,
 		graph.is.directed=FALSE,
     oos=TRUE,
 	
@@ -211,7 +215,7 @@ jofc.diffusion.dist<-function(G,Gp,
 		sep.graphs=TRUE # if TRUE, treat two graphs separately to compute dissimilarities
 #and impute W (off-diagonalblock matrix)
 # if FALSE, join the graphs and compute dissimilarities from joint graph
-
+		
 ){
 	n<-nrow(G)
 	graph.mode<- ifelse(graph.is.directed,"directed","undirected")
@@ -251,13 +255,14 @@ jofc.diffusion.dist<-function(G,Gp,
 			d=d.dim,
 			wt.equalize=FALSE,
 			separability.entries.w=FALSE,
-			assume.matched.for.oos = FALSE)	
-	J<-matrix()
+			assume.matched.for.oos = FALSE,
+			w.vals=w.vals.vec)	
+	J<-list()
 	for (Y.embed in Embed.List){
 
 		test.m<-nrow(Y.embed)/2
 		Dist=as.matrix(dist(Y.embed))[1:test.m,(1:test.m)+test.m]
-		J<-Dist
+		J<-c(J,list(Dist))
 		
 	}
 	return(J)
@@ -278,7 +283,7 @@ Embed.Nodes <-function(D.omnibus,
                        d,
 		wt.equalize=FALSE,
 		separability.entries.w=FALSE,
-		assume.matched.for.oos = FALSE ){
+		assume.matched.for.oos = FALSE ,w.vals){
 	
 	
 	Y.embeds<-list()
