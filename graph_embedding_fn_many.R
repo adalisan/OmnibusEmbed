@@ -86,7 +86,7 @@ jofc.many<-function(G,Gp,corr.list,
 		w.vals.vec,
 		graph.is.directed=FALSE,
 		oos=TRUE,
-    notconnect.wt=10,
+        notconnect.wt=10,
 		use.weighted.graph=TRUE,
 		wt.matrix.1=NULL,
 		wt.matrix.2=NULL,
@@ -202,7 +202,8 @@ jofc.many<-function(G,Gp,corr.list,
 	#print(max(D.M))
 	
 	
-Embed.List<-Embed.Nodes(D.M[1:n.1,1:n.1],D.M[1:n.2,1:n.2],D.M[1:n.1,1:n.2],
+Embed.List<-Embed.Nodes(D.M[1:n.1,1:n.1],D.M[n.1+(1:n.2),n.1+(1:n.2)],D.M[1:n.1,n.1+(1:n.2)],
+		
 		in.sample.ind.1,in.sample.ind.2 ,oos ,
 		d=d.dim,
 		wt.equalize=FALSE,
@@ -306,7 +307,10 @@ jofc.diffusion.dist.many<-function(G,Gp,corr.list,
 			w.vals=w.vals.vec)	
 	J<-list()
 	for (Y.embed in Embed.List){
-		test.m<-nrow(Y.embed)/2
+		print("dim(Y.embed)")
+		print(dim(Y.embed))	
+		
+		
 		Dist=as.matrix(dist(Y.embed))[1:test.m.1,(1:test.m.2)+test.m.1]
 		J<-c(J,list(Dist))
 		
