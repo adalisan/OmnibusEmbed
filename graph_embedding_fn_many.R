@@ -374,8 +374,6 @@ Embed.Nodes <-function(D.1,D.2,D.W,
 			w.val.l <- w.vals[l]
 			X <- X.embeds[[l]]
 			
-			
-			
 			#Compute Weight matrix corresponding in-sample  entries
 			# Since we are going to oos-embedding, set the weights  of in-sample embedding of stress
 			# We are using previous in-sample embeddings, anyway
@@ -392,11 +390,10 @@ Embed.Nodes <-function(D.1,D.2,D.W,
 			# If assume.matched.for.oos is true, we ignore the dissimilarities between matched/unmatched 
 			# pairs
 			
-				oos.Weight.mat.2[1:test.m.1,test.m.1+(1:test.m.2)]<-0
-				oos.Weight.mat.2[test.m.1+(1:test.m.2),(1:test.m.1)]<-0
+			oos.Weight.mat.2[1:test.m.1,test.m.1+(1:test.m.2)]<-0
+			oos.Weight.mat.2[test.m.1+(1:test.m.2),(1:test.m.1)]<-0
 			
-			
-			
+						
 			# if (oos.use.imputed is true) we treat the dissimiilarities between  in-sample and out-of-sample measurements
 			# from different conditions like fidelity terms
 			# otherwise they are ignored
@@ -475,7 +472,7 @@ Embed.Nodes <-function(D.1,D.2,D.W,
 	}
   
 	
-	Y.embeds
+	return(Y.embeds)
 	
 }
 
