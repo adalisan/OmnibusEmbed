@@ -59,6 +59,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 				#assume.matched.for.oos =assume.matched.for.oos,
 				#w.vals=w.vals,verbose=verbose)
 				try({	
+                w.val.len<- length(w.vals)
 							run.time.g <-Sys.time()-begin.time.g
 							print("Total sim time:")
 							print(run.time.g)
@@ -145,20 +146,20 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							
 							
 							#
-							if(!run.in.linux)	savePlot(paste(model,c.val,"p-values-McNemars-hist",".pdf",collapse="",sep=""),"pdf")
-							if(!run.in.linux) savePlot(paste(model,c.val,"p-values-McNemars-hist",".png",collapse="",sep=""),"png")
+							if(!run.in.linux&(!run.for.Sweave))	savePlot(paste(model,c.val,"p-values-McNemars-hist",".pdf",collapse="",sep=""),"pdf")
+							if(!run.in.linux&(!run.for.Sweave)) savePlot(paste(model,c.val,"p-values-McNemars-hist",".png",collapse="",sep=""),"png")
 							
-							if(!run.in.linux) savePlot(paste(model,c.val,"p-values-McNemars-hist",".ps",sep="",collapse=""),"ps")
+							if(!run.in.linux&(!run.for.Sweave)) savePlot(paste(model,c.val,"p-values-McNemars-hist",".ps",sep="",collapse=""),"ps")
 							if( run.in.linux) X11() else {windows()}
 							
 							 p.vals.density<-density(p.vals,from=0,to=1)
 							 plot.density(p.vals.density,main="Kernel Density Estimate of p-values")
 							
 							#
-							if(!run.in.linux)	savePlot(paste(model,c.val,"p-values-McNemars-kde",".pdf",collapse="",sep=""),"pdf")
-							if(!run.in.linux) savePlot(paste(model,c.val,"p-values-McNemars-kde",".png",collapse="",sep=""),"png")
+							if(!run.in.linux&(!run.for.Sweave))	savePlot(paste(model,c.val,"p-values-McNemars-kde",".pdf",collapse="",sep=""),"pdf")
+							if(!run.in.linux&(!run.for.Sweave)) savePlot(paste(model,c.val,"p-values-McNemars-kde",".png",collapse="",sep=""),"png")
 							
-							if(!run.in.linux) savePlot(paste(model,c.val,"p-values-McNemars-kde",".ps",collapse="",sep=""),"ps")
+							if(!run.in.linux&(!run.for.Sweave)) savePlot(paste(model,c.val,"p-values-McNemars-kde",".ps",collapse="",sep=""),"ps")
 							if( run.in.linux) X11() else {windows()}
 							
 #	
@@ -169,7 +170,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							
 							if( run.in.linux) X11() else {windows()}
 							
-							w.val.len<- length(w.vals)
+						
 						#	plot.graph.with.CI(sim.res$min.stress[,1:w.val.len],plot.title="Minimum Stress",plot.col="black",conf.int=FALSE,fp.points=1:length(w.vals))
 						#	lines(x=1:w.val.len, y=rep(mean(sim.res$min.stress[,w.val.len+1]),w.val.len),col="red")
 							
@@ -217,9 +218,9 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							title(plot.title)
 							par(lty=1)
 							fname<- file.path('graphs',paste(c(model,"-FC-Tradeoff-",ifelse(oos,"OOS","noOOS"),"c",c.val),collapse=""))
-							if(!run.in.linux)  savePlot(paste(fname,".pdf",sep="",collapse=""),type="pdf")
-							if(!run.in.linux)  savePlot(filename=paste(fname,".ps",sep="",collapse=""),type="ps")
-							if(!run.in.linux) savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
+							if(!run.in.linux&(!run.for.Sweave))  savePlot(paste(fname,".pdf",sep="",collapse=""),type="pdf")
+							if(!run.in.linux&(!run.for.Sweave))  savePlot(filename=paste(fname,".ps",sep="",collapse=""),type="ps")
+							if(!run.in.linux&(!run.for.Sweave)) savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
 							
 							dev.off()
 	
@@ -245,12 +246,12 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 									customx.labels=NULL,customy.labels=NULL,ispowercurve=FALSE)
 							traceback()
 							fname<- file.path('graphs',paste(c(model,"-FidCommTerms-n",n,"-",ifelse(oos,"OOS","noOOS"),"c",c.val),collapse="",sep=""))
-							if(!run.in.linux)  savePlot(paste(fname,".pdf",sep="",collapse=""),type="pdf")
-							if(!run.in.linux)  savePlot(filename=paste(fname,".ps",sep="",collapse=""),type="ps")
-							if(!run.in.linux) savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
+							if(!run.in.linux&(!run.for.Sweave))  savePlot(paste(fname,".pdf",sep="",collapse=""),type="pdf")
+							if(!run.in.linux&(!run.for.Sweave))  savePlot(filename=paste(fname,".ps",sep="",collapse=""),type="ps")
+							if(!run.in.linux&(!run.for.Sweave)) savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
 																		
 							if( run.in.linux) X11() else {windows()}
-							plot.default(x=params$w.vals,y=rep(0,w.val.len),ylim=c(0,1.5))
+							plot.default(x=params$w.vals,y=rep(0,length(params$w.vals)),ylim=c(0,1.5))
 							for (n.plot in 1:nmc){
 							
 								points(x=params$w.vals,Fid1[n.plot,],main="Fid and Comm Terms",col="red",   )
@@ -263,9 +264,9 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							
 							
 							fname<- file.path('graphs',paste(c(model,"-points-FidCommTerms-n",n,"-",ifelse(oos,"OOS","noOOS"),"c",c.val),collapse="",sep=""))
-							if(!run.in.linux)  savePlot(paste(fname,".pdf",sep="",collapse=""),type="pdf")
-							if(!run.in.linux)  savePlot(filename=paste(fname,".ps",sep="",collapse=""),type="ps")
-							if(!run.in.linux) savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
+							if(!run.in.linux&(!run.for.Sweave))  savePlot(paste(fname,".pdf",sep="",collapse=""),type="pdf")
+							if(!run.in.linux&(!run.for.Sweave))  savePlot(filename=paste(fname,".ps",sep="",collapse=""),type="ps")
+							if(!run.in.linux&(!run.for.Sweave)) savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
 							
 							
 							avgFid1.n<-colMeans(Fid1)
@@ -344,17 +345,17 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							lines(x=x.vals,y=avg.power.w.2,col="red",xlog=TRUE)
 							lines(x=x.vals,y=avg.power.w.3,col="green",xlog=TRUE)
 							par(cex.axis=0.9)
-							axis(side=1,at=1:w.val.len, labels = params$w.vals)
+							axis(side=1,at=1:length(params$w.vals), labels = params$w.vals)
 							legend("bottomright",expression(alpha==0.01,alpha==0.05,
 											alpha==0.1),col=c("blue","red","green"),lty=rep(1,3))
 						
 										
 							#title(paste(model," model: power vs w plot"))
 							fname <- file.path('graphs',paste(results.dir,ifelse(oos,"OOS","noOOS"),model,"-power-w-c",c.val,sep="", collapse=""))
-							if(!run.in.linux)	savePlot(paste(fname,".pdf",sep="",collapse=""),"pdf")
-							if(!run.in.linux) savePlot(paste(fname,".png",sep="",collapse=""),"png")
+							if(!run.in.linux&(!run.for.Sweave))	savePlot(paste(fname,".pdf",sep="",collapse=""),"pdf")
+							if(!run.in.linux&(!run.for.Sweave)) savePlot(paste(fname,".png",sep="",collapse=""),"png")
 							
-							if(!run.in.linux) savePlot(paste(fname,".ps",sep="",collapse=""),"ps")
+							if(!run.in.linux&(!run.for.Sweave)) savePlot(paste(fname,".ps",sep="",collapse=""),"ps")
 							
 							par(lwd=lwd.old)
 							

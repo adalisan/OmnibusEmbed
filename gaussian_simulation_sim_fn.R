@@ -455,8 +455,7 @@ par.mc.result <- sfLapply( 1:nmc, run.mc.rep.with.seed)
 sfStop()
 	
 	
-		print(getwd())
-		
+	
 		
 		#sink(file=file.path('logs',paste("traceback-debug-G-",mc,".txt",collapse="")))
 		#traceback()

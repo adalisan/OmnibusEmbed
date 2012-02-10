@@ -442,6 +442,44 @@ solveMarriage<- function(Dist){
 	
 }
 
+  cmds <- function (D.1,D.2,in.sample.ind,d.dim,oos) {
+        n <- length(in.sample.ind)/2
+        m<- sum(in.sample.ind)/2
+  			myD.M = D.M # i use just the object D.M ... none of the original entries!
+  			myD.M[1:n,1:n]=D.1
+  			myD.M[(n+1):(2*n),(n+1):(2*n)]=D.2
+  			myD.M[1:n,(n+1):(2*n)]=(D.1+D.2)/2
+  			myD.M[(n+1):(2*n),1:n]=(D.1+D.2)/2
+  			for(i in 1:n) for(j in (n+m+1):(2*n)) myD.M[i,j] = myD.M[j,i] = c.imp
+  			for(i in (m+1):n) for(j in (n+1):(2*n)) myD.M[i,j] = myD.M[j,i] = c.imp
+  			
+        
+         if (oos){
+          
+         myD.M.in<- myD.M[in.sample.ind,in.sample.ind]
+    			ccc = cmdscale(myD.M.in,k=d.dim,eig=T)
+   			#plot(ccc$eig)
+   			#pairs(ccc$points , col=colvec,pch=c(Ln,Ln))
+   			#plot(ccc$points[,c(2,3)] , col=colvec,pch=c(Ln,Ln))
+         Y.emb<-oosMDS(myD.M,X=ccc$points, w=ifelse(in.sample.ind,1,0),init="gower")
+         
+  # 			
+   			 U = as.matrix(dist(Y.emb[,c(2,3)]))
+         } else {
+        
+        
+    		ccc = cmdscale(myD.M,k=d.dim,eig=T)
+  			#plot(ccc$eig)
+  			#pairs(ccc$points , col=colvec,pch=c(Ln,Ln))
+  			#plot(ccc$points[,c(2,3)] , col=colvec,pch=c(Ln,Ln))
+  			
+  			U = as.matrix(dist(ccc$points[ c((m+1):(n),(n+m+1):(n+n)) ,c(2,3)]))
+   		  }
+        return(U[1:(n-m),(n-m+1):(2*(n-m))])
+			}
+
+
+
 present<-function(M){
 	true.pairings<-0
 	pair.names<-levels(M)

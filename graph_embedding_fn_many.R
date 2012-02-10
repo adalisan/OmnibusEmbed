@@ -152,8 +152,8 @@ jofc.many<-function(G,Gp,corr.list,
 			if (sep.graphs){
 				Graph.1<-graph.adjacency(wt.matrix.1, weighted= TRUE , mode=graph.mode)
 				Graph.2<-graph.adjacency(wt.matrix.2, weighted= TRUE , mode=graph.mode)
-			}
-			else{stop("This case is not implemented")
+			}			else{
+        stop("This case is not implemented")
 				
 			}
 		}
@@ -409,7 +409,7 @@ Embed.Nodes <-function(D.1,D.2,D.W,
 			
 			in.sample.ind<-c(in.sample.ind.1,in.sample.ind.2)
 			omnibus.oos.D.0 <- rbind(
-					cbind(D.omnibus[in.sample.ind,in.sample.ind],D.omnibus[in.sample.ind,!in.sample.ind]),
+					cbind(D.in,D.omnibus[in.sample.ind,!in.sample.ind]),
 					cbind(D.omnibus[!in.sample.ind,in.sample.ind],D.omnibus[!in.sample.ind,!in.sample.ind])
 			)
 			

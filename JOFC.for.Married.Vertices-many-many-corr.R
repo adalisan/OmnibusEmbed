@@ -45,7 +45,7 @@ matched.cost<-0.01
 
 
 #w.vals.vec <- c(0.5,0.7,0.9,0.95)
-w.vals.vec <- c(0.9)
+w.vals.vec <- c(0.7)
 
 w.max.index<-length(w.vals.vec)
 
@@ -53,14 +53,14 @@ matched.cost<-0.01 #If matched.cost is equal to 1, consider an unweighted graph,
 #If matched.cost is  between 0 and 1, the graph is weighted with edges between matched vertices with weights equal to matched.cost. Edges between 
 # vertices of the same condition have either weight 1 or 2 according to whether they're connected according to given adjacency matrix or not.
 
-d.dim<-4
+d.dim<-8
 T.diff<-1
 
 dims.for.dist <- 1:d.dim
 
 seed<-123
 
-nmc<-10
+nmc<-100
 for(imc in 1:nmc)
 {
 	G.orig<-ER(n,0.5)
