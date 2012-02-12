@@ -202,7 +202,7 @@ jofc.many<-function(G,Gp,corr.list,
 	#print(max(D.M))
 	
 	
-Embed.List<-Embed.Nodes(D.M[1:n.1,1:n.1],D.M[n.1+(1:n.2),n.1+(1:n.2)],D.M[1:n.1,n.1+(1:n.2)],
+Embed.List<-Embed.Nodes.many(D.M[1:n.1,1:n.1],D.M[n.1+(1:n.2),n.1+(1:n.2)],D.M[1:n.1,n.1+(1:n.2)],
 		
 		in.sample.ind.1,in.sample.ind.2 ,oos ,
 		d=d.dim,
@@ -298,7 +298,7 @@ jofc.diffusion.dist.many<-function(G,Gp,corr.list,
 	
 	
 	
-	Embed.List<-Embed.Nodes(D.M[1:n.1,1:n.1],D.M[n.1+(1:n.2),n.1+(1:n.2)],D.M[1:n.1,n.1+(1:n.2)],
+	Embed.List<-Embed.Nodes.many(D.M[1:n.1,1:n.1],D.M[n.1+(1:n.2),n.1+(1:n.2)],D.M[1:n.1,n.1+(1:n.2)],
 			in.sample.ind.1,in.sample.ind.2 ,oos ,
 			d=d.dim,
 			wt.equalize=FALSE,
@@ -327,7 +327,7 @@ jofc.diffusion.dist.many<-function(G,Gp,corr.list,
 
 
 
-Embed.Nodes <-function(D.1,D.2,D.W,
+Embed.Nodes.many <-function(D.1,D.2,D.W,
                        in.sample.ind.1,
 					   in.sample.ind.2,
                        oos, 
@@ -494,8 +494,8 @@ present.many<-function(M,corr.list,in.sample.ind.1,in.sample.ind.2){
 	for (test.i in 1:test.m.2){
 		M.i<- test.i+test.m.1
 		match.index<- M[M.i]
-		matches.i <- M[1:test.m.1]==match.index
-		matches.indices.i<- test.m.1.indices[matches.i]
+		matches.i.indic <- M[1:test.m.1]==match.index
+		matches.indices.i<- test.m.1.indices[matches.i.indic]
 		for (corr.i in corr.list){
 			for ( j in corr.i[[2]]){
 				if (j==test.m.2.indices[test.i]){
@@ -505,7 +505,7 @@ present.many<-function(M,corr.list,in.sample.ind.1,in.sample.ind.2){
 					p.r<-(precision+recall)
 					F.meas<-0
 					if(p.r!=0)
-						F.meas<- 2*precision*recall/(precision+recall)
+						F.meas<- 2*precision*recall/p.r
 			  		
 					precision.list[test.i]<-precision
 					recall.list[test.i]<-recall
