@@ -23,9 +23,10 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 		assume.matched.for.oos, 
 		w.vals,				  #w values to use for JOFC
 		wt.equalize,
-		
+	
 		verbose=FALSE,
-		power.comparison.test=TRUE){
+		power.comparison.test=TRUE
+                           ,cca.reg=FALSE){
 	
 	print(paste("random ",runif(1)))
 	print("run.mc.replicate")
@@ -175,7 +176,7 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 				n,m,
 				
 				model,oos,proc.dilation,
-			
+			  size,
 				verbose)
     
     
@@ -193,7 +194,7 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 				n,m,
 			
 				model,oos,
-			
+			  size,
 				verbose)		
     if (verbose) print("CCA test statistic complete\n")
     if (cca.reg){
@@ -204,7 +205,7 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 				n,m,
 			
 				model,oos,
-			
+			  size,
 				verbose)		
       
     }
@@ -236,6 +237,7 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 			  model,oos,Wchoice,separability.entries.w,wt.equalize,assume.matched.for.oos,oos.use.imputed,
         pom.config=pom.config,
 				w.vals=w.vals,
+        size,
 				verbose)
 	
 			T0<- JOFC.results$T0
@@ -387,6 +389,7 @@ run.pom <- function(D1, D2, D10A,D20,D2A,
 				p,q,d,c.val,
 				n,m,
 				model,oos,proc.dilation,
+        size,
 				verbose){
     # if (verbose) print (D1[1:5,1:5])
     #	if (verbose) print (D2[1:5,1:5])
@@ -450,6 +453,7 @@ run.cca<-function(D1, D2, D10A,D20,D2A,
         pprime1,pprime2,
 				n,m,
 				model,oos,
+        size,          
 				verbose){
 	
 	T0.cca <- array(0,dim=c(m))     #Test statistics for CCA under null
@@ -538,6 +542,7 @@ run.reg.cca<-function(D1, D2, D10A,D20,D2A,
         d.super=floor((d+p+q*as.numeric(c.val>0))/2),
 				n,m,
 				model,oos,
+        size,
 				verbose){
 					
 									
@@ -631,6 +636,7 @@ run.jofc <- function(D1, D2, D10A,D20,D2A,
         
         pom.config=NULL,
 				w.vals,
+                     size,
 				verbose=FALSE)   {
 	w.max.index <- length(w.vals)
 	T0<-matrix(0,w.max.index,m)

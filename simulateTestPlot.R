@@ -7,7 +7,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 			#	if ((model=="Dirichlet") && run.parallel)        call.func<-dirichlet_simulation_jofc_tradeoff_par
 				if ((model=="Dirichlet") && !run.parallel.sf)    call.func<-dirichlet_simulation_jofc_tradeoff
         if ((model=="MVN") && run.parallel.sf)           call.func<-gaussian_simulation_jofc_tradeoff_sf
-        if ((model=="Dirichlet") && run.parallel.sf)     call.func<-gaussian_simulation_jofc_tradeoff_sf
+        if ((model=="Dirichlet") && run.parallel.sf)     call.func<-dirichlet_simulation_jofc_tradeoff_sf
 				sim.res<-list()
 				print("c")
 				print(c.val)
@@ -18,7 +18,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
             if (model=="Dirichlet") real.dim <- p+q+2
 				begin.time.g <-Sys.time()
 				args.for.func.call<-list(p=p, r=r, q=q, c.val=c.val,d=d,
-           pprime1= real.dim, pprime2= real.dim,
+          
 						Wchoice     = "avg", 
 						pre.scaling = TRUE,
 						oos         = oos,
@@ -37,7 +37,18 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 						w.vals=w.vals,
 						wt.equalize=wt.equalize,
 						verbose=verbose,  power.comparison.test=power.comparison.test)
+        
+        
+        if (!run.parallel.sf)
+        args.for.func.call<- c(args.for.func.call,list(pprime1= real.dim, pprime2= real.dim))
+        
+        ############################################
+        #  Running simulation function 
+        ############################################
 				sim.res <- do.call(call.func,args=args.for.func.call)
+        
+        
+        
 				if (verbose) print("Struct of sim.res")
 				if (verbose)  print(str(sim.res))
 				print("Simulation completed.Starting Plotting functions")
@@ -150,7 +161,11 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							if(!run.in.linux&(!run.for.Sweave)) savePlot(paste(model,c.val,"p-values-McNemars-hist",".png",collapse="",sep=""),"png")
 							
 							if(!run.in.linux&(!run.for.Sweave)) savePlot(paste(model,c.val,"p-values-McNemars-hist",".ps",sep="",collapse=""),"ps")
-							if( run.in.linux) X11() else {windows()}
+						
+              
+              
+              
+              if( run.in.linux) X11() else {windows()}
 							
 							 p.vals.density<-density(p.vals,from=0,to=1)
 							 plot.density(p.vals.density,main="Kernel Density Estimate of p-values")
@@ -160,7 +175,10 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							if(!run.in.linux&(!run.for.Sweave)) savePlot(paste(model,c.val,"p-values-McNemars-kde",".png",collapse="",sep=""),"png")
 							
 							if(!run.in.linux&(!run.for.Sweave)) savePlot(paste(model,c.val,"p-values-McNemars-kde",".ps",collapse="",sep=""),"ps")
-							if( run.in.linux) X11() else {windows()}
+							
+              
+              
+              if( run.in.linux) X11() else {windows()}
 							
 #	
 # Error checking :Convergence of JOFC config to PoM config as w->0
@@ -218,7 +236,9 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							title(plot.title)
 							par(lty=1)
 							fname<- file.path('graphs',paste(c(model,"-FC-Tradeoff-",ifelse(oos,"OOS","noOOS"),"c",c.val),collapse=""))
-							if(!run.in.linux&(!run.for.Sweave))  savePlot(paste(fname,".pdf",sep="",collapse=""),type="pdf")
+							
+              
+              if(!run.in.linux&(!run.for.Sweave))  savePlot(paste(fname,".pdf",sep="",collapse=""),type="pdf")
 							if(!run.in.linux&(!run.for.Sweave))  savePlot(filename=paste(fname,".ps",sep="",collapse=""),type="ps")
 							if(!run.in.linux&(!run.for.Sweave)) savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
 							
@@ -234,7 +254,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							
               if (verbose) print(c("Fid1","Fid2","Comm"))
               if (verbose) print(cbind(Fid1,Fid2,Comm))
-						
+						if( run.in.linux) X11() else {windows()}
 							
 							plot.graph.with.CI(Fid1,"Fid and Comm Terms","red",conf.int=TRUE,   add=FALSE,fp.points=w.vals,
 									customx.labels=NULL,customy.labels=NULL,ispowercurve=FALSE)
@@ -249,7 +269,9 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							if(!run.in.linux&(!run.for.Sweave))  savePlot(paste(fname,".pdf",sep="",collapse=""),type="pdf")
 							if(!run.in.linux&(!run.for.Sweave))  savePlot(filename=paste(fname,".ps",sep="",collapse=""),type="ps")
 							if(!run.in.linux&(!run.for.Sweave)) savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
-																		
+														
+                
+                
 							if( run.in.linux) X11() else {windows()}
 							plot.default(x=params$w.vals,y=rep(0,length(params$w.vals)),ylim=c(0,1.5))
 							for (n.plot in 1:nmc){
@@ -303,7 +325,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 #  Power vs w plotting
 
 #
-							
+							  if( run.in.linux) X11() else {windows()}
 
 							
 				#temp
@@ -351,7 +373,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 						
 										
 							#title(paste(model," model: power vs w plot"))
-							fname <- file.path('graphs',paste(results.dir,ifelse(oos,"OOS","noOOS"),model,"-power-w-c",c.val,sep="", collapse=""))
+							fname <- file.path(paste(results.dir,ifelse(oos,"OOS","noOOS"),model,"-power-w-c",c.val,sep="", collapse=""))
 							if(!run.in.linux&(!run.for.Sweave))	savePlot(paste(fname,".pdf",sep="",collapse=""),"pdf")
 							if(!run.in.linux&(!run.for.Sweave)) savePlot(paste(fname,".png",sep="",collapse=""),"png")
 							
@@ -361,9 +383,6 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							
 							#dev.print(png,file=fname,height=600,width=600)
 							dev.off()
-							
-							
-	
 						
 						}
 				) #end of try

@@ -359,7 +359,8 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 
 gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
   	d           = p-1,
-		
+		pprime1     = p+q,   # cca arguments
+  	pprime2     = p+q,   # cca arguments
 		Wchoice     = "avg", 
 		pre.scaling = TRUE,        
 		oos         = TRUE,
@@ -447,7 +448,7 @@ gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
 				"w.vals",
 				"wt.equalize",
 				"verbose",
-				"power.comparison.test=power.comparison.test" )
+				"power.comparison.test" )
 	
 	
 	
@@ -469,12 +470,12 @@ sfStop()
 	
 
 	# Number of elements in the par.mc.result list for each mc replicate	
-	num.value.per.mc.rep <-12
-	if (verbose) print("str of par.mc.result")
-	if (verbose) print(str(par.mc.result))
+	num.value.per.mc.rep <-13
+	#if (verbose) print("str of par.mc.result")
+	#if (verbose) print(str(par.mc.result))
 	for (i in 1:nmc){
-		mc.res.i<-par.mc.result[[i]]
-		power[,i,]<-mc.res.i[[1]]
+		mc.res.i <- par.mc.result[[i]]
+		power[,i,] <- mc.res.i[[1]]
 		#power.cmp is has values of 0  if compare.pom.cca is FALSE
 		if (compare.pom.cca) {
 			power.cmp$cca[i,] <-mc.res.i[[2]]$cca
@@ -483,9 +484,27 @@ sfStop()
 		cont.tables[[i]]<-mc.res.i[[3]]
 		
 		agg.cont.table<-agg.cont.table+cont.tables[[i]]
-		print (paste(i,"th contingency table"))
-		print(cont.tables[[i]])
+    
+    if (verbose) print(str(par.mc.result[[i]]))
+		if (verbose) print (paste(i,"th contingency table"))
+		if (verbose) print(cont.tables[[i]])
 		config.dist[i,,1]<- mc.res.i[[4]]$frob.norm
+    
+      min.stress[i,] <- mc.res.i[[5]]
+#		means[i,]      <- par.mc.result[[(num.value.per.mc.rep*(i-1))+6]]
+		Fid.Term.1.i <- mc.res.i[[7]]$F1
+		Fid.Term.2.i <- mc.res.i[[7]]$F2
+		Comm.Term.i <- mc.res.i[[7]]$C
+		Fid.Terms.1 <- rbind(Fid.Terms.1,Fid.Term.1.i)
+		Fid.Terms.2 <- rbind(Fid.Terms.2,Fid.Term.2.i)
+		Comm.Terms <- rbind(Comm.Terms,Comm.Term.i)
+		F.to.C.ratio.i <-mc.res.i[[9]]
+		wtF.to.C.ratio.i <- mc.res.i[[10]]
+		F.bar.to.C.bar.ratio.i <- mc.res.i[[11]]
+		F.to.C.ratio <-  rbind(F.to.C.ratio,F.to.C.ratio.i)
+		wtF.to.C.ratio <- rbind(wtF.to.C.ratio,wtF.to.C.ratio.i)
+		F.bar.to.C.bar.ratio <- rbind(F.bar.to.C.bar.ratio,F.bar.to.C.bar.ratio.i)
+		optim.power[i,]<-mc.res.i[[12]]
 	}	
 		
 
@@ -502,11 +521,11 @@ sfStop()
 
 run.mc.rep.with.seed <-function(seed){
 	
-		source(file.path("lib","simulation_math_util_fn_Kcond.R"))
+		source(file.path("lib","simulation_math_util_fn.R"))
 		source(file.path("lib","oosMDS.R"))
 		source(file.path("lib","smacofM.R"))
 		source(file.path("lib","oosIM.R"))
-		
+		library(MASS)
 		print("Lib functions loaded")
 		
 		
@@ -520,7 +539,8 @@ run.mc.rep.with.seed <-function(seed){
 		print(seed)
 		#seeds<-c(seeds,list(.Random.seed))
 		
-		seeds[[mc]]<-list(.Random.seed)
+		#seeds[[mc]]<-list(.Random.seed)
+    sink()
 		
 
 		print("Running run.mc.replicate function")
