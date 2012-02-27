@@ -429,9 +429,9 @@ dirichlet_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
 	
 	
 	
-	p.prime.cond = p+q
+	#p.prime.cond = p+q
 	sfExport( "p", "r", "q", "c.val",  ##try(
-				"d","pprime1","pprime2","p.prime.cond",
+				"d","pprime1","pprime2",#"p.prime.cond",
 				"Wchoice" ,
 				"pre.scaling",
 				"oos",

@@ -426,9 +426,9 @@ gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
 	
 	
 	
-	p.prime.cond = p+q
+	#p.prime.cond = p+q
 	sfExport( "p", "r", "q", "c.val",  ##try(
-				"d","pprime1","pprime2","p.prime.cond",
+				"d","pprime1","pprime2",#"p.prime.cond",
 				"Wchoice" ,
 				"pre.scaling",
 				"oos",
@@ -475,6 +475,10 @@ sfStop()
 	#if (verbose) print(str(par.mc.result))
 	for (i in 1:nmc){
 		mc.res.i <- par.mc.result[[i]]
+		sink("debug.mc.txt")
+		print(str(mc.res.i))
+		print(mc.res.i)
+		sink()
 		power[,i,] <- mc.res.i[[1]]
 		#power.cmp is has values of 0  if compare.pom.cca is FALSE
 		if (compare.pom.cca) {
@@ -546,7 +550,7 @@ run.mc.rep.with.seed <-function(seed){
 		print("Running run.mc.replicate function")
 		tmp<- run.mc.replicate("gaussian",p, r, q, c.val,  ##try(
 				d           = d,
-				  pprime1=pprime1,   pprime2=pprime2,
+				pprime1=pprime1,   pprime2=pprime2,
 				Wchoice     = Wchoice, 
 				pre.scaling = pre.scaling,
 				oos         = oos,
