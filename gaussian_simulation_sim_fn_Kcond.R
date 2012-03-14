@@ -1,15 +1,17 @@
 
 
-gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
+
+
+
+gaussian_simulation_jofc_tradeoff_Kcond <- function(p, r, q, c.val,K,
 		d           = p-1,
-		pprime1     = p+q,   # cca arguments
-		pprime2     = p+q,   # cca arguments
+		
 		Wchoice     = "avg", 
 		pre.scaling = TRUE,
 		oos         = TRUE,
 		alpha       = NULL,
 		n = 100, m = 100, nmc = 100,
-	
+	    hardest.alt = TRUE,
 		old.gauss.model.param=FALSE,
 		separability.entries.w,
 		compare.pom.cca=TRUE,
@@ -21,8 +23,7 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 		assume.matched.for.oos,
 		w.vals,
 		wt.equalize,
-		verbose,
-    power.comparison.test=TRUE) {
+		verbose) {
 	## p: draw observations (signal) on Delta^p \in R^{p+1}
 	## r: determine the matchedness between matched pairs --
 	##    r = 0, independent(?); r = infinity, exact match
@@ -45,16 +46,6 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 	
 	w.max.index <- length(w.vals)
 	
-    
-	Fid.Terms.1<-c()
-	Fid.Terms.2<-c()
-	Comm.Terms <-c()
-	
-	F.to.C.ratio <-  c()
-	wtF.to.C.ratio <- c()
-	F.bar.to.C.bar.ratio <-c()
-  
-  
 	size <- seq(0, 1, 0.01)
 	len <- length(size)
 	power <- array(0,dim=c(w.max.index,nmc,len))
@@ -65,24 +56,21 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 	empty.cont.tab<- list(matrix(0,2,2))
 	cont.tables<-rep(empty.cont.tab,nmc)
 	min.stress<- array(0,dim=c(nmc,w.max.index+1))
-	optim.power.vec <- array(0,dim=c(nmc,len))
-  best.w.vals <-rep (0,nmc)
-  
+	
 	for(mc in 1:nmc) {
 		
 		set.seed(mc)
 		print(mc)
 		
-		mc.run<-try(run.mc.replicate("gaussian",p, r, q, c.val,
+		mc.run<-try(run.mc.replicate.Kcond("gaussian",p, r, q, c.val,K,
 						d           = d,
-						pprime1     = pprime1,   # cca arguments
-						pprime2     = pprime2,   # cca arguments
+						p.prime.cond     = ifelse(model=="gaussian",rep(p+q,K),rep(p+q+2,K)),
 						Wchoice     = Wchoice, 
 						pre.scaling = pre.scaling,
 						oos         = oos,
 						alpha       = alpha,
 						n = n, m = m,
-						
+						hardest.alt = hardest.alt,
 						old.gauss.model.param=old.gauss.model.param,
 						separability.entries.w=separability.entries.w,
 						compare.pom.cca=compare.pom.cca,
@@ -94,8 +82,7 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 						assume.matched.for.oos=assume.matched.for.oos,
 						w.vals=w.vals,
 						wt.equalize=wt.equalize,
-						verbose=verbose,
-            power.comparison.test=power.comparison.test))
+						verbose=verbose))
 		if (inherits(mc.run,"try-error")){
 			print(paste("error in iter",mc,collapse="")	)
 			power.mc= array(NA,dim=c(w.max.index,len))
@@ -124,7 +111,9 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 			
 			next
 			
-		}
+	}
+	
+	print(str(mc.run$power.mc))
 		cont.tables[[mc]]<-(mc.run$cont.tables)
 		agg.cont.table <- agg.cont.table + cont.tables[[mc]]
 		for (l in 1:w.max.index){
@@ -139,47 +128,27 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 			min.stress[mc,]   <-mc.run$min.stress
 			
 		}
-    
-	  
-    Fid.Terms.1 <- rbind(Fid.Terms.1, mc.run$FidComm.Terms$F1)
-		Fid.Terms.2 <- rbind(Fid.Terms.2, mc.run$FidComm.Terms$F2)
-		Comm.Terms <- rbind(Comm.Terms, mc.run$FidComm.Terms$C)
-		F.to.C.ratio <-  rbind(F.to.C.ratio,mc.run$F.to.C.ratio)
-		wtF.to.C.ratio <- rbind(wtF.to.C.ratio,mc.run$wtF.to.C.ratio)
-		F.bar.to.C.bar.ratio <- rbind(F.bar.to.C.bar.ratio,mc.run$F.bar.to.C.bar.ratio)
-    
-    
-	  optim.power.vec[mc,]<- mc.run$optim.power
-    best.w.vals[mc] <- mc.run$best.w
+	
 		
 		
 		
 		
 	}
-  FC.terms<-list(F1=Fid.Terms.1, F2=Fid.Terms.2, C=Comm.Terms)
-  FC.ratios<-list(f.c=F.to.C.ratio,wtf.c=wtF.to.C.ratio,f.c.bar=F.bar.to.C.bar.ratio)
-    
-  
-  
 	return (list(power=power,power.cmp=power.cmp, conting.table=agg.cont.table,conting.table.list=cont.tables,
-					config.dist=config.dist,min.stress=min.stress,FidComm.Terms=FC.terms,
-  				FC.ratios=FC.ratios,optim.power =  optim.power.vec,wstar.estim= The.mode( best.w.vals) ))
-  
-  
+					config.dist=config.dist,min.stress=min.stress))
 }
 
 
 
-gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
+gaussian_simulation_jofc_tradeoff_par_Kcond <- function(p, r, q, c.val,K,
 		d           = p-1,
-		pprime1     = p+q,   # cca arguments
-		pprime2     = p+q,   # cca arguments
+		
 		Wchoice     = "avg", 
 		pre.scaling = TRUE,        
 		oos         = TRUE,
 		alpha       = NULL,
 		n = 100, m = 100, nmc = 100,
-	
+		hardest.alt = TRUE,
 		old.gauss.model.param=FALSE,
 		separability.entries.w,
 		compare.pom.cca=TRUE,
@@ -191,8 +160,8 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 		assume.matched.for.oos,
 		w.vals,
 		wt.equalize,
-		verbose=FALSE,
-    power.comparison.test=TRUE)  {
+		power.comparison.test,
+		verbose=FALSE) {
 	## p: draw observations (signal) on Delta^p \in R^{p+1}
 	## r: determine the matchedness between matched pairs --
 	##    r = 0, independent(?); r = infinity, exact match
@@ -235,13 +204,17 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 	F.bar.to.C.bar.ratio <-c()
 	
 	seeds<-rep(list(),nmc)
-	par.mc.result<- foreach(mc =1:nmc,.packages=c("MASS","MCMCpack","smacof") ) %dopar% { #,.export=c("power.comparison.test")
+	par.mc.result<- foreach(mc =1:nmc,.packages=c("MASS","MCMCpack","smacof","abind") ) %dopar% { #,.export=c("power.comparison.test")
+		print(getwd())
+		source(file.path("lib","simulation_math_util_fn_Kcond.R"))
+		source(file.path("lib","oosMDS.R"))
+		source(file.path("lib","smacofM.R"))
+		source(file.path("lib","oosIM.R"))
 		
-		source("./src/simulation_math_util_fn.R")
+		print("Lib functions loaded")
 		
-		source("./src/oosMDS.R")
-		source("./src/smacofM.R")
-		source("./src/oosIM.R")
+		
+		
 		sink(file=file.path('logs',paste("debug-G-",mc,".txt",collapse="")))
 		set.seed(mc)
 		#if(mc<=4) {for(i in 1:mc) print(mvrnorm(4,mu=rep(0,4),Sigma=diag(4)))}
@@ -252,15 +225,17 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 		#seeds<-c(seeds,list(.Random.seed))
 		
 		seeds[[mc]]<-list(.Random.seed)
-		tmp<- run.mc.replicate("gaussian",p, r, q, c.val,  ##try(
+		
+		print("Running run.mc.replicate function")
+		tmp<- run.mc.replicate.Kcond("gaussian",p, r, q, c.val, K,  ##try(
 				d           = d,
-				pprime1     = pprime1,   # cca arguments
-				pprime2     = pprime2,   # cca arguments
+				p.prime.cond = rep(p+q,K),
 				Wchoice     = Wchoice, 
 				pre.scaling = pre.scaling,
 				oos         = oos,
 				alpha       = alpha,
 				n = n, m = m,
+				hardest.alt = hardest.alt,
 				old.gauss.model.param=old.gauss.model.param,
 				separability.entries.w=separability.entries.w,
 				compare.pom.cca=compare.pom.cca,
@@ -275,13 +250,18 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 				verbose=verbose,
 				power.comparison.test=power.comparison.test) 
 		#)
-		if (verbose) sink(file=file.path('logs',paste("traceback-debug-G-",mc,".txt",collapse="")))
-		if (verbose) traceback()
-		if (verbose) sink()
+		
+
+		
+		
+		
+		sink(file=file.path('logs',paste("traceback-debug-G-",mc,".txt",collapse="")))
+		traceback()
+		sink()
 		#If  simulation fails, generate a results list of NAs
 		if (inherits(tmp,"try-error")) {
 			print(paste("error in iter ",mc,collapse=""))
-			
+			traceback()
 			power.mc= array(NA,dim=c(w.max.index,len))
 			power.cca.mc = array(NA,dim=c(len))
 			power.pom.mc = array(NA,dim=c(len))
@@ -325,21 +305,21 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 		print(cont.tables[[i]])
 		config.dist[i,,1]<- mc.res.i[[4]]$frob.norm
 		
-		min.stress[i,] <- mc.res.i[[5]]
+		#min.stress[i,] <- mc.res.i[[5]]
 #		means[i,]      <- par.mc.result[[(num.value.per.mc.rep*(i-1))+6]]
-		Fid.Term.1.i <- mc.res.i[[7]]$F1
-		Fid.Term.2.i <- mc.res.i[[7]]$F2
-		Comm.Term.i <- mc.res.i[[7]]$C
-		Fid.Terms.1 <- rbind(Fid.Terms.1,Fid.Term.1.i)
-		Fid.Terms.2 <- rbind(Fid.Terms.2,Fid.Term.2.i)
-		Comm.Terms <- rbind(Comm.Terms,Comm.Term.i)
-		F.to.C.ratio.i <-mc.res.i[[9]]
-		wtF.to.C.ratio.i <- mc.res.i[[10]]
-		F.bar.to.C.bar.ratio.i <- mc.res.i[[11]]
-		F.to.C.ratio <-  rbind(F.to.C.ratio,F.to.C.ratio.i)
-		wtF.to.C.ratio <- rbind(wtF.to.C.ratio,wtF.to.C.ratio.i)
-		F.bar.to.C.bar.ratio <- rbind(F.bar.to.C.bar.ratio,F.bar.to.C.bar.ratio.i)
-		optim.power[i,]<-mc.res.i[[12]]
+		#Fid.Term.1.i <- mc.res.i[[7]]$F1
+		#Fid.Term.2.i <- mc.res.i[[7]]$F2
+		#Comm.Term.i <- mc.res.i[[7]]$C
+		#Fid.Terms.1 <- rbind(Fid.Terms.1,Fid.Term.1.i)
+		#Fid.Terms.2 <- rbind(Fid.Terms.2,Fid.Term.2.i)
+		#Comm.Terms <- rbind(Comm.Terms,Comm.Term.i)
+		#F.to.C.ratio.i <-mc.res.i[[9]]
+		#wtF.to.C.ratio.i <- mc.res.i[[10]]
+		#F.bar.to.C.bar.ratio.i <- mc.res.i[[11]]
+		#F.to.C.ratio <-  rbind(F.to.C.ratio,F.to.C.ratio.i)
+		#wtF.to.C.ratio <- rbind(wtF.to.C.ratio,wtF.to.C.ratio.i)
+		#F.bar.to.C.bar.ratio <- rbind(F.bar.to.C.bar.ratio,F.bar.to.C.bar.ratio.i)
+		#optim.power[i,]<-mc.res.i[[12]]
 		
 		
 	}
@@ -357,10 +337,9 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 
 
 
-gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
-  	d           = p-1,
-		pprime1     = p+q,   # cca arguments
-  	pprime2     = p+q,   # cca arguments
+gaussian_simulation_jofc_tradeoff_sf_Kcond <- function(p, r, q, c.val,K,
+		d           = p-1,
+		
 		Wchoice     = "avg", 
 		pre.scaling = TRUE,        
 		oos         = TRUE,
@@ -426,16 +405,16 @@ gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
 	
 	
 	
-	#p.prime.cond = p+q
-	sfExport( "p", "r", "q", "c.val",  ##try(
-				"d","pprime1","pprime2",#"p.prime.cond",
+	p.prime.cond = p+q
+	sfExport( "p", "r", "q", "c.val", "K",  ##try(
+				"d","p.prime.cond",
 				"Wchoice" ,
 				"pre.scaling",
 				"oos",
 				"alpha",
 				"n",
  				"m",
-				
+				"hardest.alt",
 				"old.gauss.model.param",
 				"separability.entries.w",
 				"compare.pom.cca",
@@ -452,11 +431,12 @@ gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
 	
 	
 	
-par.mc.result <- sfLapply( 1:nmc, run.mc.rep.with.seed)
+par.mc.result <- sfLapply( 1:nmc, run.mc.rep.with.seed.Kcond)
 sfStop()
 	
 	
-	
+		print(getwd())
+		
 		
 		#sink(file=file.path('logs',paste("traceback-debug-G-",mc,".txt",collapse="")))
 		#traceback()
@@ -470,16 +450,12 @@ sfStop()
 	
 
 	# Number of elements in the par.mc.result list for each mc replicate	
-	num.value.per.mc.rep <-13
-	#if (verbose) print("str of par.mc.result")
-	#if (verbose) print(str(par.mc.result))
+	num.value.per.mc.rep <-12
+	if (verbose) print("str of par.mc.result")
+	if (verbose) print(str(par.mc.result))
 	for (i in 1:nmc){
-		mc.res.i <- par.mc.result[[i]]
-		sink("debug.mc.txt")
-		print(str(mc.res.i))
-		print(mc.res.i)
-		sink()
-		power[,i,] <- mc.res.i[[1]]
+		mc.res.i<-par.mc.result[[i]]
+		power[,i,]<-mc.res.i[[1]]
 		#power.cmp is has values of 0  if compare.pom.cca is FALSE
 		if (compare.pom.cca) {
 			power.cmp$cca[i,] <-mc.res.i[[2]]$cca
@@ -488,27 +464,9 @@ sfStop()
 		cont.tables[[i]]<-mc.res.i[[3]]
 		
 		agg.cont.table<-agg.cont.table+cont.tables[[i]]
-    
-    if (verbose) print(str(par.mc.result[[i]]))
-		if (verbose) print (paste(i,"th contingency table"))
-		if (verbose) print(cont.tables[[i]])
+		print (paste(i,"th contingency table"))
+		print(cont.tables[[i]])
 		config.dist[i,,1]<- mc.res.i[[4]]$frob.norm
-    
-      min.stress[i,] <- mc.res.i[[5]]
-#		means[i,]      <- par.mc.result[[(num.value.per.mc.rep*(i-1))+6]]
-		Fid.Term.1.i <- mc.res.i[[7]]$F1
-		Fid.Term.2.i <- mc.res.i[[7]]$F2
-		Comm.Term.i <- mc.res.i[[7]]$C
-		Fid.Terms.1 <- rbind(Fid.Terms.1,Fid.Term.1.i)
-		Fid.Terms.2 <- rbind(Fid.Terms.2,Fid.Term.2.i)
-		Comm.Terms <- rbind(Comm.Terms,Comm.Term.i)
-		F.to.C.ratio.i <-mc.res.i[[9]]
-		wtF.to.C.ratio.i <- mc.res.i[[10]]
-		F.bar.to.C.bar.ratio.i <- mc.res.i[[11]]
-		F.to.C.ratio <-  rbind(F.to.C.ratio,F.to.C.ratio.i)
-		wtF.to.C.ratio <- rbind(wtF.to.C.ratio,wtF.to.C.ratio.i)
-		F.bar.to.C.bar.ratio <- rbind(F.bar.to.C.bar.ratio,F.bar.to.C.bar.ratio.i)
-		optim.power[i,]<-mc.res.i[[12]]
 	}	
 		
 
@@ -523,18 +481,18 @@ sfStop()
 					FC.ratios=FC.ratios,optim.power=optim.power))
 }
 
-run.mc.rep.with.seed <-function(seed){
+run.mc.rep.with.seed.Kcond <-function(seed){
 	
-		source(file.path("lib","simulation_math_util_fn.R"))
+		source(file.path("lib","simulation_math_util_fn_Kcond.R"))
 		source(file.path("lib","oosMDS.R"))
 		source(file.path("lib","smacofM.R"))
 		source(file.path("lib","oosIM.R"))
-		library(MASS)
+		
 		print("Lib functions loaded")
 		
 		
 		
-		sink(file=file.path('logs',paste("debug-G-",seed,".txt",collapse="")))
+		sink(file=file.path('logs',paste("Kcond-debug-G-",seed,".txt",collapse="")))
 		set.seed(seed)
 		#if(mc<=4) {for(i in 1:mc) print(mvrnorm(4,mu=rep(0,4),Sigma=diag(4)))}
 		print(runif(2))
@@ -544,13 +502,11 @@ run.mc.rep.with.seed <-function(seed){
 		#seeds<-c(seeds,list(.Random.seed))
 		
 		#seeds[[mc]]<-list(.Random.seed)
-    sink()
 		
-
-		print("Running run.mc.replicate function")
-		tmp<- run.mc.replicate("gaussian",p, r, q, c.val,  ##try(
+		print("Running run.mc.replicate.Kcond function")
+		tmp<- run.mc.replicate.Kcond("gaussian",p, r, q, c.val, K,  ##try(
 				d           = d,
-				pprime1=pprime1,   pprime2=pprime2,
+				p.prime.cond = p+q,
 				Wchoice     = Wchoice, 
 				pre.scaling = pre.scaling,
 				oos         = oos,
@@ -571,9 +527,10 @@ run.mc.rep.with.seed <-function(seed){
 				verbose=verbose,
 				power.comparison.test=power.comparison.test) 
 		#)
-		
+		sink()
 
 		return(tmp)	
 		
 	}
+
 	

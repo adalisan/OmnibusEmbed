@@ -138,7 +138,7 @@ oosIM <- function(D, X,
     } else {
       dEucWn <- 0
     }
-    stress <- sum((dissBw - dEucBw)^2) + sum((dissWn - dEucWn)^2)
+    stress <- sum(W[-(1:n),(1:n)]*(dissBw - dEucBw)^2) + sum(W[-(1:n),-(1:n)]*(dissWn - dEucWn)^2)
 	#if (is.na(stress)|is.nan(stress)){
 		#print(paste("Iter",itel,"begin"))
 		#print("dissBw")
