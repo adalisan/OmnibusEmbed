@@ -27,7 +27,7 @@ run.mc.replicate.Kcond<-function(model,p, r, q, c.val,K,
 		
 		verbose=FALSE,
 		power.comparison.test=TRUE){
-	#try.flag <- try({
+	try.flag <- try({
 				print(paste("random ",runif(1)))
 				print("run.mc.replicate")
 				#
@@ -188,7 +188,7 @@ run.mc.replicate.Kcond<-function(model,p, r, q, c.val,K,
 					
 					## ==== cca ====
 					#embed in-sample measurements
-					CCA.results <- run.cca.Kcond(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,pprime.cond=p.prime.cond,d=d)
+					CCA.results <- run.cca.Kcond(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,pprime.cond=p.prime.cond,d=d,hardest.alt = hardest.alt)
 					T0.cca <- CCA.results$T0
 					TA.cca <- CCA.results$TA
 					power.cca.mc <- CCA.results$power
@@ -197,7 +197,7 @@ run.mc.replicate.Kcond<-function(model,p, r, q, c.val,K,
 					if (verbose) print("CCA test statistic complete\n")
 					
 					## ==== pom ====
-					Pom.results  <- run.pom.Kcond(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,NULL,NULL,embed.dim=d)
+					Pom.results  <- run.pom.Kcond(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,embed.dim=d,hardest.alt = hardest.alt)
 					power.pom.mc <- Pom.results$power
 					
 				}
@@ -210,10 +210,10 @@ run.mc.replicate.Kcond<-function(model,p, r, q, c.val,K,
 				T0.w <- JOFC.results$T0
 				TA.w <- JOFC.results$TA
 				
-				if (verbose) print("T0.w")
-				if (verbose) print(T0.w)
-				if (verbose) print("TA.w")
-				if (verbose) print(TA.w)
+				#if (verbose) print("T0.w")
+				#if (verbose) print(T0.w)
+				#if (verbose) print("TA.w")
+				#if (verbose) print(TA.w)
 				for (l in 1:w.max.index){
 					power.mc[l, ] <- get_power(T0.w[l,], TA.w[l,], size)
 				}
@@ -401,7 +401,7 @@ run.mc.replicate.Kcond<-function(model,p, r, q, c.val,K,
 				#		FidComm.Sum.Terms = FidComm.Sum.Terms,F.to.C.ratio = FC.ratio, wtF.to.C.ratio=FC.ratio.2,
 				#		F.bar.to.C.bar.ratio= FC.ratio.3
 				)
-	#		}) #end try
+			}) #end try
 	
 	if (inherits(try.flag,"try-error")) {
 		print("run.mc.replicate error")
@@ -764,55 +764,62 @@ run.jofc.Kcond<-function(D.cond.list,w.vals,x.config,y.config,Y.cond.A,D.in.oos.
 	
 }
 
-run.pom.Kcond <- function(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,D20,D2A,embed.dim) {
+run.pom.Kcond <- function(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,embed.dim,hardest.alt) {
 	
 	
-	m<-attr(D.cond.list[[1]],"Size")
-	n<-dim(D.in.oos.list.0[[1]])[1]-m
+	in.n<-attr(D.cond.list[[1]],"Size")
+	oos.n<-dim(D.in.oos.list.0[[1]])[1]-in.n
 	d<-embed.dim
-	info(logger,paste(m,n,d))
-	info(logger,str(D.cond.list))
 	## ==== pom = procrustes o mds ====
 	if (oos == TRUE) {
 		#Embed in-sample
-		embed.Config.list<-list()
-		embed.joint.config<-array(0,dim=c(K,m,d))
+		
+		embed.joint.config<-list()
 		for (k in 1:K){
-			embed.joint.config[k,,]<-smacofM(as.matrix(D.cond.list[[k]]), ndim=d,verbose=TRUE)
+			embed.joint.config<-c(embed.joint.config,list(smacofM(as.matrix(D.cond.list[[k]]), ndim=d,verbose=FALSE)))
 		}
-		Y.oos.config.null<-array(0,dim=c(n,d,K))
-		Y.oos.config.alt<-array(0,dim=c(n,d,K))
+		Y.oos.config.null<-array(0,dim=c(oos.n,d,K))
+		Y.oos.config.alt<-array(0,dim=c(oos.n,d,K))
 		
 #		# Compute Proc from in-sample embeddings
 #		#proc <- procGPA(embed.joint.config,reflect=TRUE)
-		proc<- list()
+		Id.mat<-matrix(0,d,d)
+		proc<- list(Id.mat)
 		for (k in 2:K){
-			new.proc <- procrustes(embed.joint.config[k,,],embed.joint.config[1,,],,translation=TRUE,dilation=TRUE)
+			new.proc <- procrustes(embed.joint.config[[k]],embed.joint.config[[1]],translation=TRUE,dilation=TRUE)
 			proc<-c(proc,list(new.proc))
 		}
 		# Out-of sample embed and Proc Transform dissimilarities
 		
 		# TODO: Need to compute scale for each condition
 		for (k in 2:K){
-			Y.null.k<- oosMDS(D=D.in.oos.list.0[[k]],  X=asembed.joint.config[k,,])
-			Y.alt.k <- oosMDS(D=D.in.oos.list.A[[k]],  X=embed.joint.config[k,,])
-			Y.oos.config.null[,,k]  <- Y.null.k%*%proc[[k]]$R*proc[[k]]$s+proc[[k]]$tt
-			Y.oos.config.alt[,,k]  <-  Y.alt.k%*%proc[[k]]$R*proc[[k]]$s	+proc[[k]]$tt						
+			Y.null.k<- oosMDS(D=D.in.oos.list.0[[k]],  X=embed.joint.config[[k]])
+			Y.alt.k <- oosMDS(D=D.in.oos.list.A[[k]],  X=embed.joint.config[[k]])
+			
+			print("str(Y.null.k)")
+			print(str(Y.null.k))
+			
+			
+			Y.oos.config.null[,,k]  <- Y.null.k%*%proc[[k]]$R*proc[[k]]$s+(matrix(proc[[k]]$tt,nrow=oos.n,ncol=d,byrow=TRUE))
+			Y.oos.config.alt[,,k]  <-  Y.alt.k%*%proc[[k]]$R*proc[[k]]$s+(matrix(proc[[k]]$tt,nrow=oos.n,ncol=d,byrow=TRUE))					
 		}
 		
-		d.btw.pairs.null<- array(0,dim=c(n,K-1))
-		d.btw.pairs.alt <- array(0,dim=c(n,K-1))
+		d.btw.pairs.null<- array(0,dim=c(oos.n,K))
+		d.btw.pairs.alt <- array(0,dim=c(oos.n,K))
 		for (k in 2:K){
 			d.btw.pairs.null[,k]<- rowSums((Y.oos.config.null[,,k] - Y.oos.config.null[,,1])^2)
 			d.btw.pairs.alt[,k]<- rowSums((Y.oos.config.alt[,,k] - Y.oos.config.alt[,,1])^2)
 			
 		}
+		T0.pom<-rep(0,oos.n)
+		TA.pom<-rep(0,oos.n)
+		
 		if (hardest.alt){
-			T0.pom <- apply(d.btw.pairs.null,max,1)
-			TA.pom <- apply(d.btw.pairs.alt,max,1)
+			T0.pom <- apply(d.btw.pairs.null,1,max)
+			TA.pom <- apply(d.btw.pairs.alt,1,max)
 		} else{
-			T0.pom <- apply(d.btw.pairs.null,sum,1)
-			TA.pom <- apply(d.btw.pairs.alt,sum,1)
+			T0.pom <- apply(d.btw.pairs.null,1,sum)
+			TA.pom <- apply(d.btw.pairs.alt,1,sum)
 			
 		}
 		
@@ -826,10 +833,10 @@ run.pom.Kcond <- function(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,D20,D2A,em
 }
 
 
-run.cca.Kcond<-function(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,pprime.cond,d) {
+run.cca.Kcond<-function(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,pprime.cond,d,hardest.alt) {
 	
-	m<-attr(D.cond.list[[1]],"Size")
-	n<-dim(D.in.oos.list.0[[1]])[1]-m
+	in.n<-attr(D.cond.list[[1]],"Size")
+	oos.n<-dim(D.in.oos.list.0[[1]])[1]-in.n
 	#info(logger,paste("values of m,n,d ",m,n,d))
 	#info(logger,"str(D.cond.list)")
 	#info(logger,str(D.cond.list))
@@ -848,35 +855,46 @@ run.cca.Kcond<-function(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,pprime.cond,
 			embed.joint.config<-c(embed.joint.config,list(smacofM(as.matrix(D.cond.list[[k]]), ndim=pprime.cond[k],verbose=FALSE)))
 			
 		}
-		Y.oos.config.null<-array(0,dim=c(n,d,K))
-		Y.oos.config.alt<-array(0,dim=c(n,d,K))
+		Y.oos.config.null<-array(0,dim=c(oos.n,d,K))
+		Y.oos.config.alt<-array(0,dim=c(oos.n,d,K))
+		print("in.n,oos.n,d")
+		print(in.n)
+		print(oos.n)
+		print(d)
 		
 		canon.vecs<-regCCA(embed.joint.config)$eigvecs
+		print("str(canon.vecs[[1]])")
+		print(str(canon.vecs[[1]]))
 #		
 #		# TODO: Need to compute scale for each condition
 		for (k in 1:K){
 			Y.null.k<- oosMDS(D=D.in.oos.list.0[[k]],  X=embed.joint.config[[k]])
+			print("Y.null.k")
+			print(str(Y.null.k))
+			
 			Y.alt.k <- oosMDS(D=D.in.oos.list.A[[k]],  X=embed.joint.config[[k]])
-			Y.oos.config.null[,,k]  <- Y.null.k%*%canon.vecs[[k]]
-			Y.oos.config.alt[,,k]  <-  Y.alt.k%*%canon.vecs[[k]]						
+			Y.oos.config.null[,,k]  <- Y.null.k%*%canon.vecs[[k]][,1:d]
+			Y.oos.config.alt[,,k]  <-  Y.alt.k%*%canon.vecs[[k]][,1:d]						
 		}
 #		
-		T0.mat<-array(0,dim=c(K,K,m))
-		TA.mat<-array(0,dim=c(K,K,m))
+		T0.mat<-array(0,dim=c(K,K,oos.n))
+		TA.mat<-array(0,dim=c(K,K,oos.n))
 		
 		# Computing KxK dist matrix for each K-tuple(matched or unmatched) of projected vectors
 		# The transpose function t(.) is used because Y.oos.config...[m.i,,] is d \times K  instead of K \times d
-		for (m.i in 1:m){
-			T0.mat[m.i,,]<- as.matrix(dist(t(Y.oos.config.null[m.i,,])))
-			TA.mat[m.i,,]<- as.matrix(dist(t(Y.oos.config.alt[m.i,,])))
+		for (m.i in 1:oos.n){
+			T0.mat[,,m.i]<- as.matrix(dist(t(Y.oos.config.null[m.i,,])))
+			TA.mat[,,m.i]<- as.matrix(dist(t(Y.oos.config.alt[m.i,,])))
 		}
+		T0.cca<-rep(0,oos.n)
+		TA.cca<-rep(0,oos.n)
 		if (hardest.alt){
-			for (inst.it in 1:m){
+			for (inst.it in 1:oos.n){
 				T0.cca[inst.it] <- max(T0.mat[,,inst.it])
 				TA.cca[inst.it] <- max(TA.mat[,,inst.it])
 			}
 		} else {
-			for (inst.it in 1:m){
+			for (inst.it in 1:oos.n){
 				T0.cca[inst.it] <- max(T0.mat[,,inst.it])
 				TA.cca[inst.it] <- max(TA.mat[,,inst.it])
 			}

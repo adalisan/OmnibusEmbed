@@ -203,15 +203,17 @@ simulate.generate.test.model.plot.Kcond<-function(model,params,run.parallel,K){
 										conf.int=FALSE,add=TRUE,ylim=1)
 								lty.i.vec <- c(lty.i.vec,i)	
 							}
-							i<- 1+((w.val.len+3)%%10)
+							
+							if (compute.bound) {
+								i<- 1+((w.val.len+3)%%10)
 							par(lty=i)
 						    lines(sim.res$optim.power,col=colors.vec[w.val.len+3])
 							lty.i.vec <- c(lty.i.vec,i)	
-						
+						    }
 							legend.txt <- w.vals
 							if (compare.pom.cca)
 								legend.txt <-c(legend.txt ,"pom","cca")
-							legend.txt <-c(legend.txt ,"pom","cca","bound")
+							if (compute.bound) legend.txt <-c(legend.txt ,"bound")
 							legend("bottomright",legend=legend.txt,
 									col=colors.vec,lty=lty.i.vec)
 							if (add.plot.title) title(plot.title)
