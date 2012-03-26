@@ -11,7 +11,7 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 		oos         = TRUE,  #embed test observations by Out-of-sampling  ?
 		alpha       = NULL,  
 		n = 100, m = 100,    #Number of training and test observations
-	
+		
 		old.gauss.model.param=FALSE,
 		separability.entries.w,  
 		compare.pom.cca=TRUE,  # Run PoM and CCA to compare with JOFC?
@@ -23,10 +23,10 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 		assume.matched.for.oos, 
 		w.vals,				  #w values to use for JOFC
 		wt.equalize,
-	
+		
 		verbose=FALSE,
 		power.comparison.test=TRUE
-                           ,cca.reg=FALSE){
+		,cca.reg=FALSE){
 	
 	print(paste("random ",runif(1)))
 	print("run.mc.replicate")
@@ -63,7 +63,7 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 	min.stress.for.w.val = array(0,dim=c(w.max.index))   #minimum stress value for  smacof algorithm
 	pom.stress <- 0
 	
-
+	
 	T0.best.w <- matrix(0,2,m)    #Test statistics for JOFC (comparison of w=0.5 with optimal w*
 	TA.best.w <- matrix(0,2,m)
 	
@@ -95,11 +95,11 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 	optim.power<- c()
 	if (model=="gaussian"){
 		for  (aleph in size){
-		crit.val.1<-qgamma(aleph,(p)/2,scale=2/r,lower.tail=FALSE)
-		crit.val.2<-crit.val.1
-		type.2.err<-pgamma(crit.val.2,shape=(p)/2,scale=2*(1+1/r))
-		beta<- 1-type.2.err
-		optim.power<- c(optim.power,beta)
+			crit.val.1<-qgamma(aleph,(p)/2,scale=2/r,lower.tail=FALSE)
+			crit.val.2<-crit.val.1
+			type.2.err<-pgamma(crit.val.2,shape=(p)/2,scale=2*(1+1/r))
+			beta<- 1-type.2.err
+			optim.power<- c(optim.power,beta)
 		}
 	}
 	
@@ -150,21 +150,21 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 	D2<-as.matrix(D2)
 	pom.config<-c()
 	cca.config<-c()
-  if (verbose) print(D2[,1:3])
-  if (verbose) print("s")
-  if (verbose) print(s)
-  
+	if (verbose) print(D2[,1:3])
+	if (verbose) print("s")
+	if (verbose) print(s)
+	
 	D2<-D2*s
 	
 	if (verbose) print("PoM and CCA embedding\n")	
-  if (verbose) print(D1[1:10,1:3])
-  if (verbose) print(D2[1:10,1:3])
-  
-  
-  pom.config <-NULL
-  regCCA.teststats <- list()
-    PoM.teststats<- list()
-   CCA.teststats <- list()
+	if (verbose) print(D1[1:10,1:3])
+	if (verbose) print(D2[1:10,1:3])
+	
+	
+	pom.config <-NULL
+	regCCA.teststats <- list()
+	PoM.teststats<- list()
+	CCA.teststats <- list()
 	if (compare.pom.cca) {
 		
 		
@@ -172,91 +172,104 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 		
 		PoM.teststats<-run.pom(D1, D2, D10A,D20,D2A,
 				
-	      p,q,d,c.val,
+				p,q,d,c.val,
 				n,m,
 				
 				model,oos,proc.dilation,
-			  size,
+				size,
 				verbose)
-    
-    
-    pom.config<-PoM.teststats$pom.config
-    if (verbose) print(PoM.teststats$T0[1:3])
-  if (verbose) print(PoM.teststats$TA[1:3])
-  
-    
-    
-    if (verbose) print("PoM test statistic complete\n")
+		
+		
+		pom.config<-PoM.teststats$pom.config
+		if (verbose) print(PoM.teststats$T0[1:3])
+		if (verbose) print(PoM.teststats$TA[1:3])
+		
+		
+		
+		if (verbose) print("PoM test statistic complete\n")
 		CCA.teststats<-run.cca(D1, D2, D10A,D20,D2A,
-				  p,q,d,c.val,
-          pprime1,pprime2,
-	
+				p,q,d,c.val,
+				pprime1,pprime2,
+				
 				n,m,
-			
+				
 				model,oos,
-			  size,
+				size,
 				verbose)		
-    if (verbose) print("CCA test statistic complete\n")
-    if (cca.reg){
-        regCCA.teststats<-run.reg.cca(D1, D2, D10A,D20,D2A,
-				  p,q,d,c.val,
-          pprime1,pprime2,
-	        d.super,
-				n,m,
+		if (verbose) print("CCA test statistic complete\n")
+		if (cca.reg){
+			regCCA.teststats<-run.reg.cca(D1, D2, D10A,D20,D2A,
+					p,q,d,c.val,
+					pprime1,pprime2,
+					d.super,
+					n,m,
+					
+					model,oos,
+					size,
+					verbose)		
 			
-				model,oos,
-			  size,
-				verbose)		
-      
-    }
+		}
 	}
-
-    
-		
-
-
-  
-  
-    D.oos.1<-dist(Y1)
-		D.oos.2.null <- dist(Y20)
-		D.oos.2.alt <- dist(Y2A)
-  
-    ideal.omnibus.0  <- as.matrix(dist(rbind(X1,X2,Y1,Y20)))
-  		ideal.omnibus.A  <- as.matrix(dist(rbind(X1,X2,Y1,Y2A)))
 	
-  
-			 JOFC.results <-run.jofc(D1, D2, D10A,D20,D2A,
-					D.oos.1,
-					D.oos.2.null ,
-					D.oos.2.alt ,					
-					ideal.omnibus.0  ,
-					ideal.omnibus.A ,
 	
-				n,m,
-				d,c.val,
-			  model,oos,Wchoice,separability.entries.w,wt.equalize,assume.matched.for.oos,oos.use.imputed,
-        pom.config=pom.config,
-				w.vals=w.vals,
-        size,
-				verbose)
 	
-			T0<- JOFC.results$T0
-			TA<- JOFC.results$TA
 	
-  if (verbose) print("JOFC test statistic complete \n")
-	    for (l in 1:w.max.index){
+	
+	
+	
+	D.oos.1<-dist(Y1)
+	D.oos.2.null <- dist(Y20)
+	D.oos.2.alt <- dist(Y2A)
+	
+	ideal.omnibus.0  <- as.matrix(dist(rbind(X1,X2,Y1,Y20)))
+	ideal.omnibus.A  <- as.matrix(dist(rbind(X1,X2,Y1,Y2A)))
+	
+	
+	JOFC.results <-run.jofc(D1, D2, D10A,D20,D2A,
+			D.oos.1,
+			D.oos.2.null ,
+			D.oos.2.alt ,					
+			ideal.omnibus.0  ,
+			ideal.omnibus.A ,
 			
-			power.mcnemar.l <- get_power(T0[l,],TA[l,],level.mcnemar)
-			if (power.mcnemar.l>power.w.star){
-				rival.w <- w.vals[l]
-				power.w.star <- power.mcnemar.l
-				w.val.rival.idx <- l
-			}
-	    }
-			
-		
+			n,m,
+			d,
+			model,oos,Wchoice,separability.entries.w,wt.equalize,assume.matched.for.oos,oos.use.imputed,
+			pom.config=pom.config,
+			w.vals=w.vals,
+			size,
+			verbose)
 	
-
+	T0<- JOFC.results$T0
+	TA<- JOFC.results$TA
+	
+	if (verbose) print("JOFC test statistic complete \n")
+	for (l in 1:w.max.index){
+		
+		power.mcnemar.l <- get_power(T0[l,],TA[l,],level.mcnemar)
+		if (power.mcnemar.l>power.w.star){
+			rival.w <- w.vals[l]
+			power.w.star <- power.mcnemar.l
+			w.val.rival.idx <- l
+		}
+	}
+	
+	
+	FidComm.Terms<- list(F1=JOFC.results$Fid.Err.Term.1,F2=JOFC.results$Fid.Err.Term.2,C=JOFC.results$Comm.Err.Term)
+	FidComm.Sum.Terms <- list(F1=JOFC.results$Fid.Err.Sum.Term.1,F2=JOFC.results$Fid.Err.Sum.Term.2,C=JOFC.results$Comm.Err.Sum.Term)
+	
+	
+	if(verbose) print(str(FidComm.Terms))
+	if(verbose) print("FC.ratio")
+	if(verbose) print(str(JOFC.results$FC.ratio))
+	if(verbose) print("FC.ratio.2")
+	if(verbose) print(str(JOFC.results$FC.ratio.2))
+	if(verbose) print("FC.ratio.3")
+	if(verbose) print(str(JOFC.results$FC.ratio.3))
+	
+	F.to.C.ratio = JOFC.results$FC.ratio
+	wtF.to.C.ratio=JOFC.results$FC.ratio.2
+	F.bar.to.C.bar.ratio= JOFC.results$FC.ratio.3
 	
 	
 	# Power comparison test
@@ -312,29 +325,29 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 		D.oos.2.alt <- dist(Y2A)
 		ideal.omnibus.0  <- as.matrix(dist(rbind(X1,X2,Y1,Y20)))
 		ideal.omnibus.A  <- as.matrix(dist(rbind(X1,X2,Y1,Y2A)))
-	
-	     JOFC.results <-run.jofc(D1, D2, D10A,D20,D2A,
-					D.oos.1,
-					D.oos.2.null ,
-					D.oos.2.alt ,
-					
-					ideal.omnibus.0  ,
-					ideal.omnibus.A ,
-	
+		
+		JOFC.results <-run.jofc(D1, D2, D10A,D20,D2A,
+				D.oos.1,
+				D.oos.2.null ,
+				D.oos.2.alt ,
+				
+				ideal.omnibus.0  ,
+				ideal.omnibus.A ,
+				
 				n,m,
 				d,c.val,
 				model,oos,Wchoice,separability.entries.w,wt.equalize,assume.matched.for.oos,oos.use.imputed,
-        		compare.pom.cca =TRUE,
+				compare.pom.cca =TRUE,
 				w.vals=c(rival.w,def.w),
 				verbose)
-				
-				
-				T0.best.w <- JOFC.results$T0
-				TA.best.w <- JOFC.results$TA
-				if (verbose) print("JOFC test statistic complete \n")
-				
-			
-			
+		
+		
+		T0.best.w <- JOFC.results$T0
+		TA.best.w <- JOFC.results$TA
+		if (verbose) print("JOFC test statistic complete \n")
+		
+		
+		
 		
 		w.val.def.idx <- which(w.vals==def.w)
 		w.val.rival.idx<- which(w.vals==rival.w)
@@ -361,300 +374,292 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 		power.mc[l, ] <- get_power(T0[l,], TA[l,], size)
 	}
 	
-
-	FidComm.Terms<- list(F1=JOFC.results$Fid.Err.Term.1,F2=JOFC.results$Fid.Err.Term.2,C=JOFC.results$Comm.Err.Term)
-	FidComm.Sum.Terms <- list(F1=JOFC.results$Fid.Err.Sum.Term.1,F2=JOFC.results$Fid.Err.Sum.Term.2,C=JOFC.results$Comm.Err.Sum.Term)
-	if(verbose) print(str(FidComm.Terms))
-	if(verbose) print("FC.ratio")
-	if(verbose) print(str(JOFC.results$FC.ratio))
-	if(verbose) print("FC.ratio.2")
-	if(verbose) print(str(JOFC.results$FC.ratio.2))
-	if(verbose) print("FC.ratio.3")
-	if(verbose) print(str(JOFC.results$FC.ratio.3))
+	
 	
 	
 	print("end run.mc.replicate")
 	list(power.mc=power.mc,
-       power.cmp=list(cca = CCA.teststats$power,pom = PoM.teststats$power,cca.reg = regCCA.teststats$power),
-       cont.tables=cont.table,
+			power.cmp=list(cca = CCA.teststats$power,pom = PoM.teststats$power,cca.reg = regCCA.teststats$power),
+			cont.tables=cont.table,
 			config.dist= config.mismatch, min.stress=c(min.stress.for.w.val,pom.stress),means=means,
-       FidComm.Terms=FidComm.Terms,	FidComm.Sum.Terms = FidComm.Sum.Terms,
-       F.to.C.ratio = JOFC.results$FC.ratio, wtF.to.C.ratio=JOFC.results$FC.ratio.2,
-			F.bar.to.C.bar.ratio= JOFC.results$FC.ratio.3,optim.power=optim.power,best.w =rival.w
-			)
+			FidComm.Terms=FidComm.Terms,	FidComm.Sum.Terms = FidComm.Sum.Terms,
+			F.to.C.ratio = F.to.C.ratio, wtF.to.C.ratio=wtF.to.C.ratio,
+			F.bar.to.C.bar.ratio= F.bar.to.C.bar.ratio,
+			optim.power=optim.power,best.w =rival.w
+	)
 	
 }
 
 run.pom <- function(D1, D2, D10A,D20,D2A,
-				p,q,d,c.val,
-				n,m,
-				model,oos,proc.dilation,
-        size,
-				verbose){
-    # if (verbose) print (D1[1:5,1:5])
-    #	if (verbose) print (D2[1:5,1:5])
-		
-  
+		p,q,d,c.val,
+		n,m,
+		model,oos,proc.dilation,
+		size,
+		verbose){
+	# if (verbose) print (D1[1:5,1:5])
+	#	if (verbose) print (D2[1:5,1:5])
+	
+	
 	T0.pom <- array(0,dim=c(m))    #Test statistics for PoM under null
 	TA.pom <- array(0,dim=c(m))    #Test statistics for JOFC under alternative
 	
-		## ==== pom = procrustes o mds ====
-		if (oos == TRUE) {
-			#Embed in-sample
-			X1t <- smacofM(D1, ndim=d,verbose=FALSE)
-			X2t <- smacofM(D2, ndim=d,verbose=FALSE)
+	## ==== pom = procrustes o mds ====
+	if (oos == TRUE) {
+		#Embed in-sample
+		X1t <- smacofM(D1, ndim=d,verbose=FALSE)
+		X2t <- smacofM(D2, ndim=d,verbose=FALSE)
 #      if (verbose) print ("Configs")
 #  		if (verbose) print (X1t)
 #			if (verbose) print (X2t)
-     
-      
-      if (verbose) print ("Config. Means")
-	#		if (verbose) print (colMeans(X1t))
-	#		if (verbose) print (colMeans(X2t))
-			# Compute Proc from in-sample embeddings
-			proc <- MCMCpack::procrustes(X2t, X1t, dilation=proc.dilation)
-			# Out-of sample embed and Proc Transform dissimilarities
-#if (profile.mode)			Rprof("profile-oosMDS.out",append=TRUE)
-			Y1t  <- oosMDS(D10A, X1t)
-			Y20t <- oosMDS(D20, X2t) %*% proc$R * proc$s
-			Y2At <- oosMDS(D2A, X2t) %*% proc$R * proc$s
-#if (profile.mode)			Rprof(NULL)
-			X2tp<-X2t %*% proc$R * proc$s
-			pom.config<-rbind(X1t,X2tp)
-			pom.stress<- sum((as.dist(D1) - dist(X1t))^2)
-			pom.stress<- pom.stress+ sum((as.dist(D2) - dist(X2tp))^2)
-			if (verbose) print("PoM embedding complete\n")
-		} else {
-			X1t <- smacofM(D10A,ndim= d,verbose=FALSE,init=cmdscale(D10A,d))
-			D20A <-dist(rbind(X2, Y20, Y2A))
-			X2t <- smacofM(D20A,ndim= d,verbose=FALSE,init=cmdscale(D20A,d))
-			center1 <- colMeans(X1t[1:n, ])
-			center2 <- colMeans(X2t[1:n, ])
-			X1t <- X1t - matrix(center1, n+m, d, byrow=TRUE) # column-center training only
-			X2t <- X2t - matrix(center2, n+2*m, d, byrow=TRUE)
-			proc <- MCMCpack::procrustes(X2t[1:n, ], X1t[1:n, ], dilation=proc.dilation)
-			Y1t <- X1t[(n+1):(n+m), ]
-			Y20t <- X2t[(n+1):(n+m), ] %*% proc$R * proc$s
-			Y2At <- X2t[(n+m+1):(n+2*m), ] %*% proc$R * proc$s
-		}
 		
-		T0.pom <- rowSums((Y1t - Y20t)^2)
-		TA.pom <- rowSums((Y1t - Y2At)^2)
-		power.pom <- get_power(T0.pom, TA.pom, size)
-		if (verbose) print("PoM test statistic complete \n")
-    return(list(T0=T0.pom,TA=TA.pom,power=power.pom,pom.config=pom.config))
-
-
+		
+		if (verbose) print ("Config. Means")
+		#		if (verbose) print (colMeans(X1t))
+		#		if (verbose) print (colMeans(X2t))
+		# Compute Proc from in-sample embeddings
+		proc <- MCMCpack::procrustes(X2t, X1t, dilation=proc.dilation)
+		# Out-of sample embed and Proc Transform dissimilarities
+#if (profile.mode)			Rprof("profile-oosMDS.out",append=TRUE)
+		Y1t  <- oosMDS(D10A, X1t)
+		Y20t <- oosMDS(D20, X2t) %*% proc$R * proc$s
+		Y2At <- oosMDS(D2A, X2t) %*% proc$R * proc$s
+#if (profile.mode)			Rprof(NULL)
+		X2tp<-X2t %*% proc$R * proc$s
+		pom.config<-rbind(X1t,X2tp)
+		pom.stress<- sum((as.dist(D1) - dist(X1t))^2)
+		pom.stress<- pom.stress+ sum((as.dist(D2) - dist(X2tp))^2)
+		if (verbose) print("PoM embedding complete\n")
+	} else {
+		X1t <- smacofM(D10A,ndim= d,verbose=FALSE,init=cmdscale(D10A,d))
+		D20A <-dist(rbind(X2, Y20, Y2A))
+		X2t <- smacofM(D20A,ndim= d,verbose=FALSE,init=cmdscale(D20A,d))
+		center1 <- colMeans(X1t[1:n, ])
+		center2 <- colMeans(X2t[1:n, ])
+		X1t <- X1t - matrix(center1, n+m, d, byrow=TRUE) # column-center training only
+		X2t <- X2t - matrix(center2, n+2*m, d, byrow=TRUE)
+		proc <- MCMCpack::procrustes(X2t[1:n, ], X1t[1:n, ], dilation=proc.dilation)
+		Y1t <- X1t[(n+1):(n+m), ]
+		Y20t <- X2t[(n+1):(n+m), ] %*% proc$R * proc$s
+		Y2At <- X2t[(n+m+1):(n+2*m), ] %*% proc$R * proc$s
+	}
+	
+	T0.pom <- rowSums((Y1t - Y20t)^2)
+	TA.pom <- rowSums((Y1t - Y2At)^2)
+	power.pom <- get_power(T0.pom, TA.pom, size)
+	if (verbose) print("PoM test statistic complete \n")
+	return(list(T0=T0.pom,TA=TA.pom,power=power.pom,pom.config=pom.config))
+	
+	
 	
 }
 
 run.cca<-function(D1, D2, D10A,D20,D2A,
-				p,q,d,c.val,
-        pprime1,pprime2,
-				n,m,
-				model,oos,
-        size,          
-				verbose){
+		p,q,d,c.val,
+		pprime1,pprime2,
+		n,m,
+		model,oos,
+		size,          
+		verbose){
 	
 	T0.cca <- array(0,dim=c(m))     #Test statistics for CCA under null
 	TA.cca <- array(0,dim=c(m))		#Test statistics for CCA under alternative
-	  if (model=="gaussian"){
-					pprime1 <- p+q
-					pprime2 <- p+q
-				}
-				else{
-					pprime1 <- p+q+2
-					pprime2 <- p+q+2
-					
-				}
+	if (model=="gaussian"){
+		pprime1 <- p+q
+		pprime2 <- p+q
+	}
+	else{
+		pprime1 <- p+q+2
+		pprime2 <- p+q+2
+		
+	}
 	## ==== cca ====
-		#embed in-sample measurements
-		if (oos == TRUE) {
-			if (c.val==0){
-				if (model=="gaussian"){
-					
-					X1t <- smacofM(D1,ndim = p,verbose=FALSE)
-					X2t <- smacofM(D2,ndim = p,verbose=FALSE)
-				} else{
-					X1t <- smacofM(D1,ndim = p+1,verbose=TRUE)		
-					X2t <- smacofM(D2,ndim = p+1,verbose=FALSE)
-				}
-			} else{
-				X1t <- smacofM(D=D1,ndim= pprime1,verbose=FALSE)
-				X2t <- smacofM(D=D2,ndim= pprime2,verbose=FALSE)
-			}
-			
-			xcca <- cancor(X1t, X2t)
-			
-			#project using projection vectors computed by CCA
-#if (profile.mode)			Rprof("profile-oosMDS.out",append=TRUE)
-			Y1t  <- (oosMDS(D10A, X1t) %*% xcca$xcoef)[, 1:d]
-			Y20t <- (oosMDS(D20, X2t) %*% xcca$ycoef)[, 1:d]
-			Y2At <- (oosMDS(D2A, X2t) %*% xcca$ycoef)[, 1:d]
-#if (profile.mode)			Rprof(NULL)
-			#cca.config<-rbind(X1t,X2t)
-			
-		} else {
-			if (c.val==0){
-				if (model=="gaussian"){
-					X1t <- smacofM(D10A, ndim=p,verbose=FALSE)
-					D20A <-dist(rbind(X2, Y20, Y2A))
-					X2t <- smacofM(D20A, ndim=p,verbose=FALSE)
-				}
-				else{
-					X1t <- smacofM(D10A, ndim=p+1,verbose=FALSE)
-					D20A <-dist(rbind(X2, Y20, Y2A))
-					X2t <- smacofM(D20A, ndim=p+1,verbose=FALSE)
-					
-					
-				}
-			} else{
-			
-				X1t <- smacofM(D10A, ndim=pprime1,verbose=FALSE,init=cmdscale(D10A,pprime1))
-				D20A <-dist(rbind(X2, Y20, Y2A))
-				X2t <- smacofM(D20A, ndim=pprime2,verbose=FALSE,init=cmdscale(D20A,pprime2))
+	#embed in-sample measurements
+	if (oos == TRUE) {
+		if (c.val==0){
+			if (model=="gaussian"){
 				
-				
+				X1t <- smacofM(D1,ndim = p,verbose=FALSE)
+				X2t <- smacofM(D2,ndim = p,verbose=FALSE)
+			} else{
+				X1t <- smacofM(D1,ndim = p+1,verbose=TRUE)		
+				X2t <- smacofM(D2,ndim = p+1,verbose=FALSE)
 			}
-			
-			
-			if (verbose) print("CCA embedding complete\n")
-			center1 <- colMeans(X1t[1:n, ])   # column means of training obs
-			center2 <- colMeans(X2t[1:n, ])
-			X1t <- X1t - matrix(center1, n+m, pprime1, byrow=TRUE) # column-center training only
-			X2t <- X2t - matrix(center2, n+2*m, pprime2, byrow=TRUE)
-			cca <- cancor(X1t[1:n, ], X2t[1:n, ])
-			Y1t <-  (X1t[(n+1):(n+m), ] %*% cca$xcoef )[, 1:d]
-			Y20t <- (X2t[(n+1):(n+m), ] %*% cca$ycoef)[, 1:d]
-			Y2At <- (X2t[(n+m+1):(n+2*m), ] %*% cca$ycoef)[, 1:d]
+		} else{
+			X1t <- smacofM(D=D1,ndim= pprime1,verbose=FALSE)
+			X2t <- smacofM(D=D2,ndim= pprime2,verbose=FALSE)
 		}
-		T0.cca <- rowSums((Y1t - Y20t)^2)
-		TA.cca <- rowSums((Y1t - Y2At)^2)
-		power.cca.mc <- get_power(T0.cca, TA.cca, size)
-		return(list(power=power.cca.mc,T0=T0.cca,TA=TA.cca	))
+		
+		xcca <- cancor(X1t, X2t)
+		
+		#project using projection vectors computed by CCA
+#if (profile.mode)			Rprof("profile-oosMDS.out",append=TRUE)
+		Y1t  <- (oosMDS(D10A, X1t) %*% xcca$xcoef)[, 1:d]
+		Y20t <- (oosMDS(D20, X2t) %*% xcca$ycoef)[, 1:d]
+		Y2At <- (oosMDS(D2A, X2t) %*% xcca$ycoef)[, 1:d]
+#if (profile.mode)			Rprof(NULL)
+		#cca.config<-rbind(X1t,X2t)
+		
+	} else {
+		if (c.val==0){
+			if (model=="gaussian"){
+				X1t <- smacofM(D10A, ndim=p,verbose=FALSE)
+				D20A <-dist(rbind(X2, Y20, Y2A))
+				X2t <- smacofM(D20A, ndim=p,verbose=FALSE)
+			}
+			else{
+				X1t <- smacofM(D10A, ndim=p+1,verbose=FALSE)
+				D20A <-dist(rbind(X2, Y20, Y2A))
+				X2t <- smacofM(D20A, ndim=p+1,verbose=FALSE)
+				
+				
+			}
+		} else{
+			
+			X1t <- smacofM(D10A, ndim=pprime1,verbose=FALSE,init=cmdscale(D10A,pprime1))
+			D20A <-dist(rbind(X2, Y20, Y2A))
+			X2t <- smacofM(D20A, ndim=pprime2,verbose=FALSE,init=cmdscale(D20A,pprime2))
+			
+			
+		}
+		
+		
+		if (verbose) print("CCA embedding complete\n")
+		center1 <- colMeans(X1t[1:n, ])   # column means of training obs
+		center2 <- colMeans(X2t[1:n, ])
+		X1t <- X1t - matrix(center1, n+m, pprime1, byrow=TRUE) # column-center training only
+		X2t <- X2t - matrix(center2, n+2*m, pprime2, byrow=TRUE)
+		cca <- cancor(X1t[1:n, ], X2t[1:n, ])
+		Y1t <-  (X1t[(n+1):(n+m), ] %*% cca$xcoef )[, 1:d]
+		Y20t <- (X2t[(n+1):(n+m), ] %*% cca$ycoef)[, 1:d]
+		Y2At <- (X2t[(n+m+1):(n+2*m), ] %*% cca$ycoef)[, 1:d]
+	}
+	T0.cca <- rowSums((Y1t - Y20t)^2)
+	TA.cca <- rowSums((Y1t - Y2At)^2)
+	power.cca.mc <- get_power(T0.cca, TA.cca, size)
+	return(list(power=power.cca.mc,T0=T0.cca,TA=TA.cca	))
 	
 	
 }
 
 run.reg.cca<-function(D1, D2, D10A,D20,D2A,
-				p,q,d,c.val,
-        pprime1,pprime2,
-        d.super=floor((d+p+q*as.numeric(c.val>0))/2),
-				n,m,
-				model,oos,
-        size,
-				verbose){
-					
-									
-					
+		p,q,d,c.val,
+		pprime1,pprime2,
+		d.super=floor((d+p+q*as.numeric(c.val>0))/2),
+		n,m,
+		model,oos,
+		size,
+		verbose){
+	
+	
+	
 	T0.cca.reg <- array(0,dim=c(m))     #Test statistics for regularized CCA under null
 	TA.cca.reg <- array(0,dim=c(m))		#Test statistics for regularized CCA under alternative
 	
 	
-		##low-dimensional (regularized) CCA 
-		## ==== cca ====
-		#embed in-sample measurements
-		if (oos == TRUE) {
+	##low-dimensional (regularized) CCA 
+	## ==== cca ====
+	#embed in-sample measurements
+	if (oos == TRUE) {
+		
+		if (model=="gaussian"){
 			
-				if (model=="gaussian"){
-					
-					X1t <- smacofM(D1,ndim =d.super,verbose=FALSE)
-					X2t <- smacofM(D2,ndim =d.super,verbose=FALSE)
-				} else{
-					X1t <- smacofM(D1,ndim = d.super+1,verbose=TRUE)		
-					X2t <- smacofM(D2,ndim = d.super+1,verbose=FALSE)
-				}
-			
-			
-			xcca <- cancor(X1t, X2t)
-			
-			#project using projection vectors computed by CCA
-#if (profile.mode)			Rprof("profile-oosMDS.out",append=TRUE)
-			Y1t  <- (oosMDS(D10A, X1t) %*% xcca$xcoef)[, 1:d]
-			Y20t <- (oosMDS(D20, X2t) %*% xcca$ycoef)[, 1:d]
-			Y2At <- (oosMDS(D2A, X2t) %*% xcca$ycoef)[, 1:d]
-#if (profile.mode)			Rprof(NULL)
-			#cca.config<-rbind(X1t,X2t)
-			
-		} else {
-			if (c.val==0){
-				if (model=="gaussian"){
-					X1t <- smacofM(D10A, ndim=d.super,verbose=FALSE)
-					D20A <-dist(rbind(X2, Y20, Y2A))
-					X2t <- smacofM(D20A, ndim=d.super,verbose=FALSE)
-				}
-				else{
-					X1t <- smacofM(D10A, ndim= d.super+1,verbose=FALSE)
-					D20A <-dist(rbind(X2, Y20, Y2A))
-					X2t <- smacofM(D20A, ndim= d.super+1,verbose=FALSE)
-					
-					
-				}
-			} else{
-				if (model=="gaussian"){
-					pprime1 <- d.super
-					pprime2 <- d.super
-				}
-				else{
-					pprime1 <- d.super+2
-					pprime2 <- d.super+2
-					
-				}
-				X1t <- smacofM(D10A, ndim=pprime1,verbose=FALSE,init=cmdscale(D10A,pprime1))
-				D20A <-dist(rbind(X2, Y20, Y2A))
-				X2t <- smacofM(D20A, ndim=pprime2,verbose=FALSE,init=cmdscale(D20A,pprime2))								
-			}						
-			if (verbose) print("CCA embedding complete\n")
-			center1 <- colMeans(X1t[1:n, ])   # column means of training obs
-			center2 <- colMeans(X2t[1:n, ])
-			X1t <- X1t - matrix(center1, n+m, pprime1, byrow=TRUE) # column-center training only
-			X2t <- X2t - matrix(center2, n+2*m, pprime2, byrow=TRUE)
-			cca <- cancor(X1t[1:n, ], X2t[1:n, ])
-			Y1t <-  (X1t[(n+1):(n+m), ] %*% cca$xcoef )[, 1:d]
-			Y20t <- (X2t[(n+1):(n+m), ] %*% cca$ycoef)[, 1:d]
-			Y2At <- (X2t[(n+m+1):(n+2*m), ] %*% cca$ycoef)[, 1:d]
+			X1t <- smacofM(D1,ndim =d.super,verbose=FALSE)
+			X2t <- smacofM(D2,ndim =d.super,verbose=FALSE)
+		} else{
+			X1t <- smacofM(D1,ndim = d.super+1,verbose=TRUE)		
+			X2t <- smacofM(D2,ndim = d.super+1,verbose=FALSE)
 		}
-		T0.cca.reg <- rowSums((Y1t - Y20t)^2)
-		TA.cca.reg <- rowSums((Y1t - Y2At)^2)
-		power.cca.reg.mc <- get_power(T0.cca.reg, TA.cca.reg, size)
+		
+		
+		xcca <- cancor(X1t, X2t)
+		
+		#project using projection vectors computed by CCA
+#if (profile.mode)			Rprof("profile-oosMDS.out",append=TRUE)
+		Y1t  <- (oosMDS(D10A, X1t) %*% xcca$xcoef)[, 1:d]
+		Y20t <- (oosMDS(D20, X2t) %*% xcca$ycoef)[, 1:d]
+		Y2At <- (oosMDS(D2A, X2t) %*% xcca$ycoef)[, 1:d]
+#if (profile.mode)			Rprof(NULL)
+		#cca.config<-rbind(X1t,X2t)
+		
+	} else {
+		if (c.val==0){
+			if (model=="gaussian"){
+				X1t <- smacofM(D10A, ndim=d.super,verbose=FALSE)
+				D20A <-dist(rbind(X2, Y20, Y2A))
+				X2t <- smacofM(D20A, ndim=d.super,verbose=FALSE)
+			}
+			else{
+				X1t <- smacofM(D10A, ndim= d.super+1,verbose=FALSE)
+				D20A <-dist(rbind(X2, Y20, Y2A))
+				X2t <- smacofM(D20A, ndim= d.super+1,verbose=FALSE)
+				
+				
+			}
+		} else{
+			if (model=="gaussian"){
+				pprime1 <- d.super
+				pprime2 <- d.super
+			}
+			else{
+				pprime1 <- d.super+2
+				pprime2 <- d.super+2
+				
+			}
+			X1t <- smacofM(D10A, ndim=pprime1,verbose=FALSE,init=cmdscale(D10A,pprime1))
+			D20A <-dist(rbind(X2, Y20, Y2A))
+			X2t <- smacofM(D20A, ndim=pprime2,verbose=FALSE,init=cmdscale(D20A,pprime2))								
+		}						
+		if (verbose) print("CCA embedding complete\n")
+		center1 <- colMeans(X1t[1:n, ])   # column means of training obs
+		center2 <- colMeans(X2t[1:n, ])
+		X1t <- X1t - matrix(center1, n+m, pprime1, byrow=TRUE) # column-center training only
+		X2t <- X2t - matrix(center2, n+2*m, pprime2, byrow=TRUE)
+		cca <- cancor(X1t[1:n, ], X2t[1:n, ])
+		Y1t <-  (X1t[(n+1):(n+m), ] %*% cca$xcoef )[, 1:d]
+		Y20t <- (X2t[(n+1):(n+m), ] %*% cca$ycoef)[, 1:d]
+		Y2At <- (X2t[(n+m+1):(n+2*m), ] %*% cca$ycoef)[, 1:d]
+	}
+	T0.cca.reg <- rowSums((Y1t - Y20t)^2)
+	TA.cca.reg <- rowSums((Y1t - Y2At)^2)
+	power.cca.reg.mc <- get_power(T0.cca.reg, TA.cca.reg, size)
 	
 	return(list(power=power.cca.reg.mc,T0=T0.cca.reg,TA=TA.cca.reg	))
-	}
+}
 
 
 run.jofc <- function(D1, D2, D10A,D20,D2A,
-  				D.oos.1,
-					D.oos.2.null ,
-					D.oos.2.alt ,
-					
-					ideal.omnibus.0  ,
-					ideal.omnibus.A ,
-	
-				n,m,
-				d,c.val,
-				model,oos,Wchoice,separability.entries.w,wt.equalize,assume.matched.for.oos,oos.use.imputed,
-        
-        pom.config=NULL,
-				w.vals,
-                     size,
-				verbose=FALSE)   {
+		D.oos.1,
+		D.oos.2.null ,
+		D.oos.2.alt ,
+		
+		ideal.omnibus.0  ,
+		ideal.omnibus.A ,
+		
+		n,m,
+		d,
+		model,oos,Wchoice,separability.entries.w,wt.equalize,assume.matched.for.oos,oos.use.imputed,
+		
+		pom.config=NULL,
+		w.vals,
+		size,
+		verbose=FALSE)   {
 	w.max.index <- length(w.vals)
 	T0<-matrix(0,w.max.index,m)
 	TA<-matrix(0,w.max.index,m)
 	
-    Fid.Err.Term.1 <- c()
-		Fid.Err.Term.2 <- c()
-		Comm.Err.Term  <- c()
-		
-		Fid.Err.Sum.Term.1 <-c()
-		Fid.Err.Sum.Term.2 <- c()
-		Comm.Err.Sum.Term  <- c()
-		FC.ratio    <- c()
-		FC.ratio.2  <- c()
-		FC.ratio.3  <- c()
-  
-  
-  
+	Fid.Err.Term.1 <- c()
+	Fid.Err.Term.2 <- c()
+	Comm.Err.Term  <- c()
+	
+	Fid.Err.Sum.Term.1 <-c()
+	Fid.Err.Sum.Term.2 <- c()
+	Comm.Err.Sum.Term  <- c()
+	FC.ratio    <- c()
+	FC.ratio.2  <- c()
+	FC.ratio.3  <- c()
+	
+	
+	
 	## ==== jofc ====
 	
 	# Impute "between-condition" dissimilarities from different objects  
@@ -673,11 +678,12 @@ run.jofc <- function(D1, D2, D10A,D20,D2A,
 		#In sample embedding
 		# Form omnibus dissimilarity matrix
 		M <- omnibusM(D1, D2, L)
-    
+		
 		init.conf<-pom.config
 		
-	
-		
+		if (verbose) print("M and init.conf")
+		if (verbose) print(str(M))
+		if (verbose) print(str(init.conf))
 		# Embed in-sample using different weight matrices (differentw values)
 		X.embeds<-JOFC.Insample.Embed(M,d,w.vals,separability.entries.w,init.conf=init.conf,wt.equalize=wt.equalize)
 		
@@ -704,8 +710,8 @@ run.jofc <- function(D1, D2, D10A,D20,D2A,
 		# OOS Dissimilarity matrices
 		#
 		
-
-			
+		
+		
 		#Imputing dissimilarity  entries for OOS
 		if (Wchoice == "avg") {
 			L.tilde.null <- (D.oos.1 + D.oos.2.null)/2
@@ -810,24 +816,24 @@ run.jofc <- function(D1, D2, D10A,D20,D2A,
 			Y2At<-Y.At[m+(1:m),]
 			
 			
-
+			
 			
 			T0[l,] <- rowSums((Y1t - Y2t)^2)
 			TA[l,] <- rowSums((Y1t.A - Y2At)^2)
-			}
-			
-			
+		}
+		
+		
+		
+		
+	}
 	
 	
-}
-
-
-return(list(T0=T0,TA=TA,
-              Fid.Err.Term.1=Fid.Err.Term.1 ,		Fid.Err.Term.2=Fid.Err.Term.2,  Comm.Err.Term=Comm.Err.Term  ,  	  		
-		Fid.Err.Sum.Term.1 = Fid.Err.Sum.Term.1 ,		Fid.Err.Sum.Term.2 = Fid.Err.Sum.Term.2 ,		Comm.Err.Sum.Term  =Comm.Err.Sum.Term  , 
-		FC.ratio = FC.ratio ,		FC.ratio.2 =FC.ratio.2 ,		FC.ratio.3 = FC.ratio.3
-            ))
-
+	return(list(T0=T0,TA=TA,
+					Fid.Err.Term.1=Fid.Err.Term.1 ,		Fid.Err.Term.2=Fid.Err.Term.2,  Comm.Err.Term=Comm.Err.Term  ,  	  		
+					Fid.Err.Sum.Term.1 = Fid.Err.Sum.Term.1 ,		Fid.Err.Sum.Term.2 = Fid.Err.Sum.Term.2 ,		Comm.Err.Sum.Term  =Comm.Err.Sum.Term  , 
+					FC.ratio = FC.ratio ,		FC.ratio.2 =FC.ratio.2 ,		FC.ratio.3 = FC.ratio.3
+			))
+	
 }
 
 
@@ -874,6 +880,7 @@ JOFC.Insample.Embed <-function(D,ndimens,w.vals,sep.err.w,init.conf,wt.equalize)
 	fid1.sum.vec<-c()
 	fid2.sum.vec<-c()
 	
+	#avg comm and fid errors
 	comm.vec<-c()
 	fid1.vec<-c()
 	fid2.vec<-c()
@@ -912,6 +919,7 @@ JOFC.Insample.Embed <-function(D,ndimens,w.vals,sep.err.w,init.conf,wt.equalize)
 			}
 		}
 		
+		num.fid.terms<-half.n*(half.n-1)/2
 		fid1.sum.vec <- c(fid1.sum.vec,fid.term.1)
 		fid2.sum.vec <- c(fid2.sum.vec,fid.term.2)
 		comm.sum.vec <- c(comm.sum.vec,comm.term)
@@ -919,22 +927,20 @@ JOFC.Insample.Embed <-function(D,ndimens,w.vals,sep.err.w,init.conf,wt.equalize)
 		stress.mat<-as.dist(Weight.Mat) * stress.mat
 		stress <- sum(stress.mat)
 		stress.vec<-c(stress.vec,stress)
-		num.fid.terms<-half.n*(half.n-1)/2
+		
 		fid1.vec <- c(fid1.vec,fid.term.1/num.fid.terms)
 		fid2.vec <- c(fid2.vec,fid.term.2/num.fid.terms)
 		comm.vec <- c(comm.vec,comm.term/half.n)
 		
-}
+	}
 	FC.ratio   <- (fid1.sum.vec+fid2.sum.vec)/comm.sum.vec
 	FC.ratio.2 <- ((1-w.vals)/w.vals)*(fid1.sum.vec+fid2.sum.vec)/comm.sum.vec
 	FC.ratio.3 <- (fid1.vec + fid2.vec) / comm.vec
-	smacof.embed<-c(smacof.embed,list(stress.vec),list(fid1.vec),list(fid2.vec),list(comm.vec) ,
-		list(fid1.sum.vec),list(fid2.sum.vec),list(comm.sum.vec),list(FC.ratio),list(FC.ratio.2),list(FC.ratio.3))
-	#print("length(smacof.embed)")
-	#print(length(smacof.embed))
-	#print(sum(smacof.embed[[1]]-smacof.embed[[2]]))
-	#print(sum(smacof.embed[[1]]-smacof.embed[[length(w.vals)]]))
-#	if (profile.mode) Rprof(NULL)
+	smacof.embed<-c(smacof.embed,list(stress.vec),
+			list(fid1.vec),list(fid2.vec),list(comm.vec) ,
+			list(fid1.sum.vec),list(fid2.sum.vec),list(comm.sum.vec),
+			list(FC.ratio),list(FC.ratio.2),list(FC.ratio.3))
+	
 	return(smacof.embed)
 }
 
@@ -1044,7 +1050,7 @@ get_crit_val<- function(T0,size)
 { 
 	n <- length(T0)	
 	T0 <- sort(T0)
-	return(T0[round(n*(1-size))])	
+	return(T0[ceiling(n*(1-size))])	
 }
 
 get_power <- function(T0, TA, size)
@@ -1061,7 +1067,7 @@ get_power <- function(T0, TA, size)
 		} else if(size[i] == 1) {
 			power[i] <- 1
 		} else {
-			power[i] <- sum(TA > T0[round(n*(1-size[i]))]) / n
+			power[i] <- sum(TA > T0[ceiling(n*(1-size[i]))]) / n
 		}
 	}
 	power
@@ -1442,20 +1448,20 @@ omnibusM.inoos <- function(D1, D2, W)
 }
 The.mode <- function(x, show_all_modes = F) 
 { 
- x_freq <- table(x) 
- mode_location <- which.max(x_freq) 
- The_mode <- names(x_freq)[mode_location] 
- Number_of_modes <- length(mode_location) 
- # 
- if(show_all_modes) { 
-  if(Number_of_modes >1) { 
-   warning(paste("Multiple modes exist - returning all",Number_of_modes,"of 
-them"))} 
-  return(The_mode) 
- } else { 
-  if(Number_of_modes >1) { 
-   warning(paste("Multiple modes exist - returning only the first one out 
-of", Number_of_modes))} 
-  return(The_mode[1]) 
- } 
+	x_freq <- table(x) 
+	mode_location <- which.max(x_freq) 
+	The_mode <- names(x_freq)[mode_location] 
+	Number_of_modes <- length(mode_location) 
+	# 
+	if(show_all_modes) { 
+		if(Number_of_modes >1) { 
+			warning(paste("Multiple modes exist - returning all",Number_of_modes,"of 
+									them"))} 
+		return(The_mode) 
+	} else { 
+		if(Number_of_modes >1) { 
+			warning(paste("Multiple modes exist - returning only the first one out 
+									of", Number_of_modes))} 
+		return(The_mode[1]) 
+	} 
 } 

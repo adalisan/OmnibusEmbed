@@ -218,6 +218,9 @@ run.mc.replicate.Kcond<-function(model,p, r, q, c.val,K,
 					power.mc[l, ] <- get_power(T0.w[l,], TA.w[l,], size)
 				}
 				
+				
+				# find which of the w values has the highest power at level.mcnemar
+				# Use that w value for mcnemar's tes
 				power.w.star <- 0
 				
 				
@@ -246,155 +249,171 @@ run.mc.replicate.Kcond<-function(model,p, r, q, c.val,K,
 				# re-run the simulation only for w= w^* and w=0.5
 				# compute the contingency table using those results
 				if (verbose) print("Power comparison test")
-
-				#if (power.comparison.test){
 				
-				if (verbose) print("Power comparison test starting")
-				## n pairs of matched points
-				D.cond.list<-list()
-				
-				w.vals.best.vs.equal.wt  <-c(w.vals[w.val.rival.idx],def.w)
-				
-				if (verbose) print("n matched points starting")
-				
-				## n pairs of matched points
-				if (model=="gaussian"){
-					xlist <- matched_rnorm_Kcond(n, p, q, c.val, r, K, alpha=alpha.mc[1:n, ],sigma.alpha=sigma,
-							old.gauss.model.param=old.gauss.model.param,sigma.beta=NULL)
-				} else{
-					xlist <- matched_rdirichlet_Kcond(n, p, r, q, c.val,K, alpha.mc[1:n, ])
-				}
-				x.config<-xlist$X
-				for (k in 1:K){
-					X.cond<-x.config[,,k]
-					D.cond <- dist(X.cond)
-					D.cond.list <- c(D.cond.list, list(D.cond))
-				}
-				
-				if (model=="gaussian")
-					sigma.mc<-xlist$sigma.beta
-				
-				
-				if (verbose) print("random matched pairs generated\n")
-				
-				#prescaling
-				sc.cond<-rep(1,K)
-				if (pre.scaling) {
-					for (cond.index in 1:K)
-						sc.cond[cond.index] <- lm(as.vector(D.cond.list[[1]]) ~ as.vector(D.cond.list[[cond.index]]) + 0)$coefficients
+				if (power.comparison.test){
 					
-					#Apply the scaling coefficients
-				}
-				Y.cond.A<-list()
-				
-				
-				
-				
-				
-				#m pairs of unmatched points
-				if (model=="gaussian"){
-					## test observations -- m pairs of matched and m pairs of unmatched
-					ylist <- matched_rnorm_Kcond(m, p, q, c.val, r,K, alpha=alpha.mc[(n+1):(n+m), ],
-							sigma.alpha=sigma,old.gauss.model.param=old.gauss.model.param, sigma.beta=sigma.mc)
-					for (cond.index in 1:K){
-						Y.cond.A<-c(Y.cond.A,list(matched_rnorm_Kcond(m, p, q, c.val, r,K, alpha=alpha.mc[(n+(cond.index-1)*m+1):(n+(cond.index)*m), ],
-												sigma.alpha=sigma,old.gauss.model.param=old.gauss.model.param, sigma.beta=sigma.mc)$X[,,cond.index]))
+					if (verbose) print("Power comparison test starting")
+					## n pairs of matched points
+					D.cond.list<-list()
+					
+					w.vals.best.vs.equal.wt  <-c(w.vals[w.val.rival.idx],def.w)
+					
+					if (verbose) print("n matched points starting")
+					
+					## n pairs of matched points
+					if (model=="gaussian"){
+						xlist <- matched_rnorm_Kcond(n, p, q, c.val, r, K, alpha=alpha.mc[1:n, ],sigma.alpha=sigma,
+								old.gauss.model.param=old.gauss.model.param,sigma.beta=NULL)
+					} else{
+						xlist <- matched_rdirichlet_Kcond(n, p, r, q, c.val,K, alpha.mc[1:n, ])
+					}
+					x.config<-xlist$X
+					for (k in 1:K){
+						X.cond<-x.config[,,k]
+						D.cond <- dist(X.cond)
+						D.cond.list <- c(D.cond.list, list(D.cond))
 					}
 					
+					if (model=="gaussian")
+						sigma.mc<-xlist$sigma.beta
 					
-				} else{
-					ylist <- matched_rdirichlet_Kcond(m, p, r, q, c.val,K, alpha.mc[(n+1):(n+m), ])
-					for (cond.index in 1:K){
-						Y.cond.A<-c(Y.cond.A,list(matched_rdirichlet_Kcond(m, p, r,q, c.val, K,alpha=alpha.mc[(n+(cond.index-1)*m+1):(n+(cond.index)*m), ],
-												sigma.alpha=sigma,old.gauss.model.param=old.gauss.model.param, sigma.beta=sigma.mc)$X[,,cond.index]))
+					
+					if (verbose) print("random matched pairs generated\n")
+					
+					#prescaling
+					sc.cond<-rep(1,K)
+					if (pre.scaling) {
+						for (cond.index in 1:K)
+							sc.cond[cond.index] <- lm(as.vector(D.cond.list[[1]]) ~ as.vector(D.cond.list[[cond.index]]) + 0)$coefficients
+						
+						#Apply the scaling coefficients
 					}
-				}
-				
-				
-				Y.cond.A<-list()
-				#m pairs of unmatched points
-				if (model=="gaussian"){
-					## test observations -- m pairs of matched and m pairs of unmatched
-					ylist <- matched_rnorm_Kcond(m, p, q, c.val, r, K,alpha=alpha.mc[(n+1):(n+m), ],
-							sigma.alpha=sigma,old.gauss.model.param=old.gauss.model.param, sigma.beta=sigma.mc)
-					if (!hardest.alt) {
+					Y.cond.A<-list()
+					
+					
+					
+					
+					
+					#m pairs of unmatched points
+					if (model=="gaussian"){
+						## test observations -- m pairs of matched and m pairs of unmatched
+						ylist <- matched_rnorm_Kcond(m, p, q, c.val, r,K, alpha=alpha.mc[(n+1):(n+m), ],
+								sigma.alpha=sigma,old.gauss.model.param=old.gauss.model.param, sigma.beta=sigma.mc)
 						for (cond.index in 1:K){
 							Y.cond.A<-c(Y.cond.A,list(matched_rnorm_Kcond(m, p, q, c.val, r,K, alpha=alpha.mc[(n+(cond.index-1)*m+1):(n+(cond.index)*m), ],
+													sigma.alpha=sigma,old.gauss.model.param=old.gauss.model.param, sigma.beta=sigma.mc)$X[,,cond.index]))
+						}
+						
+						
+					} else{
+						ylist <- matched_rdirichlet_Kcond(m, p, r, q, c.val,K, alpha.mc[(n+1):(n+m), ])
+						for (cond.index in 1:K){
+							Y.cond.A<-c(Y.cond.A,list(matched_rdirichlet_Kcond(m, p, r,q, c.val, K,alpha=alpha.mc[(n+(cond.index-1)*m+1):(n+(cond.index)*m), ],
 													sigma.alpha=sigma,old.gauss.model.param=old.gauss.model.param, sigma.beta=sigma.mc)$X[,,cond.index]))
 						}
 					}
 					
 					
-				} else{
-					ylist <- matched_rdirichlet_Kcond(m, p, r, q, c.val,K, alpha.mc[(n+1):(n+m), ])
-					if (!hardest.alt) {
-						for (cond.index in 1:K){
-							Y.cond.A<-c(Y.cond.A,list(matched_rdirichlet_Kcond(m, p, r, q, c.val,K, 
-													alpha=alpha.mc[(n+(cond.index-1)*m+1):(n+(cond.index)*m), ])$X[,,cond.index]))
+					Y.cond.A<-list()
+					#m pairs of unmatched points
+					if (model=="gaussian"){
+						## test observations -- m pairs of matched and m pairs of unmatched
+						ylist <- matched_rnorm_Kcond(m, p, q, c.val, r, K,alpha=alpha.mc[(n+1):(n+m), ],
+								sigma.alpha=sigma,old.gauss.model.param=old.gauss.model.param, sigma.beta=sigma.mc)
+						if (!hardest.alt) {
+							for (cond.index in 1:K){
+								Y.cond.A<-c(Y.cond.A,list(matched_rnorm_Kcond(m, p, q, c.val, r,K, alpha=alpha.mc[(n+(cond.index-1)*m+1):(n+(cond.index)*m), ],
+														sigma.alpha=sigma,old.gauss.model.param=old.gauss.model.param, sigma.beta=sigma.mc)$X[,,cond.index]))
+							}
+						}
+						
+						
+					} else{
+						ylist <- matched_rdirichlet_Kcond(m, p, r, q, c.val,K, alpha.mc[(n+1):(n+m), ])
+						if (!hardest.alt) {
+							for (cond.index in 1:K){
+								Y.cond.A<-c(Y.cond.A,list(matched_rdirichlet_Kcond(m, p, r, q, c.val,K, 
+														alpha=alpha.mc[(n+(cond.index-1)*m+1):(n+(cond.index)*m), ])$X[,,cond.index]))
+							}
 						}
 					}
-				}
-				
-				if (hardest.alt) {
-					alt.matched.tuple <- matched_rnorm_Kcond(m, p, q, c.val, r,K, alpha=alpha.mc[(n+1):(n+(m)), ],
-							sigma.alpha=sigma,old.gauss.model.param=old.gauss.model.param, sigma.beta=sigma.mc)
-					alt.unmatched.tuple.unmatched.source <- matched_rnorm_Kcond(m, p, q, c.val, r,K, alpha=alpha.mc[(n+m):(n+(2*m)), ],
-							sigma.alpha=sigma,old.gauss.model.param=old.gauss.model.param, sigma.beta=sigma.mc)
 					
-					for (cond.index in 1:K){						
-						Y.cond.A<-c(Y.cond.A,list(alt.matched.tuple$X[,,cond.index]))
+					if (hardest.alt) {
+						alt.matched.tuple <- matched_rnorm_Kcond(m, p, q, c.val, r,K, alpha=alpha.mc[(n+1):(n+(m)), ],
+								sigma.alpha=sigma,old.gauss.model.param=old.gauss.model.param, sigma.beta=sigma.mc)
+						alt.unmatched.tuple.unmatched.source <- matched_rnorm_Kcond(m, p, q, c.val, r,K, alpha=alpha.mc[(n+m):(n+(2*m)), ],
+								sigma.alpha=sigma,old.gauss.model.param=old.gauss.model.param, sigma.beta=sigma.mc)
+						
+						for (cond.index in 1:K){						
+							Y.cond.A<-c(Y.cond.A,list(alt.matched.tuple$X[,,cond.index]))
+						}
+						unmatched.cond <-sample(1:K,1)
+						Y.cond.A[[unmatched.cond]] <- alt.unmatched.tuple.unmatched.source$X[,,unmatched.cond]
 					}
-					unmatched.cond <-sample(1:K,1)
-					Y.cond.A[[unmatched.cond]] <- alt.unmatched.tuple.unmatched.source$X[,,unmatched.cond]
+					y.config<-ylist$X
+					
+					
+					
+					
+					
+					
+					
+					#
+					# Dissimilarity matrices for in-sample + out-of-sample
+					#
+					# Dissimilarity matrices
+					D.in.oos.list.0<-list()
+					D.in.oos.list.A<-list()
+					
+					
+					for (cond.idx in 1:K){
+						diss.in.oos.cond.idx.null <- as.matrix(dist(rbind(x.config[,,cond.idx],y.config[,,cond.idx])))*sc.cond[cond.idx]
+						D.in.oos.list.0<-c(D.in.oos.list.0,list(diss.in.oos.cond.idx.null))
+					}
+					for (cond.idx in 1:K){
+						diss.in.oos.cond.idx.alt  <- as.matrix(dist(rbind(x.config[,,cond.idx],Y.cond.A[[cond.idx]])))*sc.cond[cond.idx]
+						D.in.oos.list.A<-c(D.in.oos.list.A,list(diss.in.oos.cond.idx.alt))
+					}
+					
+					
+					
+					print("Running JOFC")
+					
+					JOFC.results.new <- run.jofc.Kcond(D.cond.list,w.vals.best.vs.equal.wt,
+							x.config,y.config,Y.cond.A,D.in.oos.list.0,D.in.oos.list.A,
+							K,n,m,d,
+							oos,separability.entries.w,init.conf,wt.equalize,Wchoice,assume.matched.for.oos,oos.use.imputed,
+							verbose)
+					
+					print("Ended JOFC")
+					
+					T0.best.w<- JOFC.results.new$T0
+					TA.best.w<- JOFC.results.new$TA
+					
+					crit.value<-get_crit_val(T0.best.w[1,],level.mcnemar)
+					crit.value.2<-get_crit_val(T0.best.w[2,],level.mcnemar)
+					if (verbose){
+						print("crit.values")
+						print(crit.value)
+						print(crit.value.2)
+					}
+					cont.table[1,1] <- sum(T0.best.w[1,]<=crit.value & T0.best.w[2,]<=crit.value.2) + 
+							sum(TA.best.w[1,]>crit.value & TA.best.w[2,]>crit.value.2)
+					cont.table[1,2] <- sum(T0.best.w[1,]>crit.value & T0.best.w[2,]<=crit.value.2)  + 
+							sum(TA.best.w[1,]<=crit.value & TA.best.w[2,]>crit.value.2)
+					cont.table[2,1] <- sum(T0.best.w[1,]<=crit.value & T0.best.w[2,]>crit.value.2)  +
+							sum(TA.best.w[1,]>crit.value & TA.best.w[2,]<=crit.value.2)
+					cont.table[2,2] <- sum(T0.best.w[1,]>crit.value & T0.best.w[2,]>crit.value.2)   + 
+							sum(TA.best.w[1,]<=crit.value & TA.best.w[2,]<=crit.value.2) 
+					
 				}
-				y.config<-ylist$X
 				
-				
-				
-				
-				
-				
-				
-				#
-				# Dissimilarity matrices for in-sample + out-of-sample
-				#
-				# Dissimilarity matrices
-				D.in.oos.list.0<-list()
-				D.in.oos.list.A<-list()
-				
-				
-				for (cond.idx in 1:K){
-					diss.in.oos.cond.idx.null <- as.matrix(dist(rbind(x.config[,,cond.idx],y.config[,,cond.idx])))*sc.cond[cond.idx]
-					D.in.oos.list.0<-c(D.in.oos.list.0,list(diss.in.oos.cond.idx.null))
-				}
-				for (cond.idx in 1:K){
-					diss.in.oos.cond.idx.alt  <- as.matrix(dist(rbind(x.config[,,cond.idx],Y.cond.A[[cond.idx]])))*sc.cond[cond.idx]
-					D.in.oos.list.A<-c(D.in.oos.list.A,list(diss.in.oos.cond.idx.alt))
-				}
-				
-				
-				
-				print("Running JOFC")
-				
-				JOFC.results.new <- run.jofc.Kcond(D.cond.list,w.vals.best.vs.equal.wt,x.config,y.config,Y.cond.A,D.in.oos.list.0,D.in.oos.list.A,
-						K,n,m,d,
-						oos,separability.entries.w,init.conf,wt.equalize,Wchoice,assume.matched.for.oos,oos.use.imputed,
-						verbose)
-				
-				print("Ended JOFC")
-				
-				T0.best.w<- JOFC.results.new$T0
-				TA.best.w<- JOFC.results.new$TA
-				
-				#}
-				for (l in 1:w.max.index){
-					power.mc[l, ] <- get_power(T0.w[l,], TA.w[l,], size)
-				}
 				
 				
 				
 				print("end run.mc.replicate")
-				list(power.mc=power.mc,power.cmp=list(cca = power.cca.mc,pom = power.pom.mc,cca.reg =power.cca.reg.mc), cont.tables=cont.table,
+				list(power.mc=power.mc,power.cmp=list(cca = power.cca.mc,pom = power.pom.mc,cca.reg =power.cca.reg.mc),
+						cont.tables=cont.table,
 						config.dist= config.mismatch,
 						min.stress=c(min.stress.for.w.val,pom.stress)
 				#		,means=means,FidComm.Terms=FidComm.Terms,
@@ -1221,7 +1240,7 @@ get_crit_val<- function(T0,size)
 { 
 	n <- length(T0)	
 	T0 <- sort(T0)
-	return(T0[round(n*(1-size))])	
+	return(T0[ceiling(n*(1-size))])	
 }
 
 get_power <- function(T0, TA, size)
@@ -1238,7 +1257,7 @@ get_power <- function(T0, TA, size)
 		} else if(size[i] == 1) {
 			power[i] <- 1
 		} else {
-			power[i] <- sum(TA > T0[round(n*(1-size[i]))]) / n
+			power[i] <- sum(TA > T0[ceiling(n*(1-size[i]))]) / n
 		}
 	}
 	power
