@@ -417,12 +417,16 @@ gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
 	Fid.Terms.2<-c()
 	Comm.Terms <-c()
 	
+	Fid.Sum.Terms.1<-c()
+	Fid.Sum.Terms.2<-c()
+	Comm.Sum.Terms <-c()
+	
 	F.to.C.ratio <-  c()
 	wtF.to.C.ratio <- c()
 	F.bar.to.C.bar.ratio <-c()
 	
 	seeds<-rep(list(),nmc)
-	sfInit( parallel=TRUE, cpus=4 )
+	sfInit( parallel=TRUE, cpus=num.cpus )
 	
 	
 	
@@ -451,7 +455,7 @@ gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
 			"power.comparison.test" )
 	
 	
-	
+	print("Starting parallelization in gaussian_simulation_jofc_tradeoff_sf") 
 	par.mc.result <- sfLapply( 1:nmc, run.mc.rep.with.seed)
 	sfStop()
 	
@@ -502,6 +506,17 @@ gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
 		Fid.Terms.1 <- rbind(Fid.Terms.1,Fid.Term.1.i)
 		Fid.Terms.2 <- rbind(Fid.Terms.2,Fid.Term.2.i)
 		Comm.Terms <- rbind(Comm.Terms,Comm.Term.i)
+		
+		Fid.Sum.Term.1.i <- mc.res.i[[8]]$F1
+		Fid.Sum.Term.2.i <- mc.res.i[[8]]$F2
+		Comm.Sum.Term.i <- mc.res.i[[8]]$C
+		Fid.Sum.Terms.1 <- rbind(Fid.Sum.Terms.1,Fid.Sum.Term.1.i)
+		Fid.Sum.Terms.2 <- rbind(Fid.Sum.Terms.2,Fid.Sum.Term.2.i)
+		Comm.Sum.Terms <- rbind(Comm.Sum.Terms,Comm.Sum.Term.i)
+		
+		
+		
+		
 		F.to.C.ratio.i <-mc.res.i[[9]]
 		wtF.to.C.ratio.i <- mc.res.i[[10]]
 		F.bar.to.C.bar.ratio.i <- mc.res.i[[11]]

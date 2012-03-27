@@ -406,7 +406,7 @@ gaussian_simulation_jofc_tradeoff_sf_Kcond <- function(p, r, q, c.val,K,
 	F.bar.to.C.bar.ratio <-c()
 	
 	seeds<-rep(list(),nmc)
-	sfInit( parallel=TRUE, cpus=8 )
+	sfInit( parallel=TRUE, cpus=num.cpus )
 	
 	
 	

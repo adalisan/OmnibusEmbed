@@ -694,7 +694,7 @@ run.jofc <- function(D1, D2, D10A,D20,D2A,
 		Fid.Err.Sum.Term.1 <- X.embeds[[w.max.index+5]]
 		Fid.Err.Sum.Term.2 <- X.embeds[[w.max.index+6]]
 		Comm.Err.Sum.Term  <- X.embeds[[w.max.index+7]]
-		FC.ratio  <- X.embeds[[w.max.index+8]]
+		FC.ratio    <- X.embeds[[w.max.index+8]]
 		FC.ratio.2  <- X.embeds[[w.max.index+9]]
 		FC.ratio.3  <- X.embeds[[w.max.index+10]]
 		
@@ -881,9 +881,9 @@ JOFC.Insample.Embed <-function(D,ndimens,w.vals,sep.err.w,init.conf,wt.equalize)
 	fid2.sum.vec<-c()
 	
 	#avg comm and fid errors
-	comm.vec<-c()
-	fid1.vec<-c()
-	fid2.vec<-c()
+	comm.avg.vec<-c()
+	fid1.avg.vec<-c()
+	fid2.avg.vec<-c()
 	
 	
 	half.n<- n/2
@@ -928,16 +928,16 @@ JOFC.Insample.Embed <-function(D,ndimens,w.vals,sep.err.w,init.conf,wt.equalize)
 		stress <- sum(stress.mat)
 		stress.vec<-c(stress.vec,stress)
 		
-		fid1.vec <- c(fid1.vec,fid.term.1/num.fid.terms)
-		fid2.vec <- c(fid2.vec,fid.term.2/num.fid.terms)
-		comm.vec <- c(comm.vec,comm.term/half.n)
+		fid1.avg.vec <- c(fid1.avg.vec,fid.term.1/num.fid.terms)
+		fid2.avg.vec <- c(fid2.avg.vec,fid.term.2/num.fid.terms)
+		comm.avg.vec <- c(comm.avg.vec,comm.term/half.n)
 		
 	}
 	FC.ratio   <- (fid1.sum.vec+fid2.sum.vec)/comm.sum.vec
 	FC.ratio.2 <- ((1-w.vals)/w.vals)*(fid1.sum.vec+fid2.sum.vec)/comm.sum.vec
-	FC.ratio.3 <- (fid1.vec + fid2.vec) / comm.vec
+	FC.ratio.3 <- (fid1.avg.vec + fid2.avg.vec) / comm.avg.vec
 	smacof.embed<-c(smacof.embed,list(stress.vec),
-			list(fid1.vec),list(fid2.vec),list(comm.vec) ,
+			list(fid1.avg.vec),list(fid2.avg.vec),list(comm.avg.vec) ,
 			list(fid1.sum.vec),list(fid2.sum.vec),list(comm.sum.vec),
 			list(FC.ratio),list(FC.ratio.2),list(FC.ratio.3))
 	
