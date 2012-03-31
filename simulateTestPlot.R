@@ -178,7 +178,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							
               
               
-              if( run.in.linux) X11() else {windows()}
+  #            if( run.in.linux) X11() else {windows()}
 							
 #	
 # Error checking :Convergence of JOFC config to PoM config as w->0
@@ -186,7 +186,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 						#	plot.graph.with.CI(sim.res$config.dist[,,1],plot.title="Config. Mismatch of wMDS with PoM",plot.col="black",conf.int=FALSE,fp.points=1:length(w.vals))
 							
 							
-							if( run.in.linux) X11() else {windows()}
+						#	if( run.in.linux) X11() else {windows()}
 							
 						
 						#	plot.graph.with.CI(sim.res$min.stress[,1:w.val.len],plot.title="Minimum Stress",plot.col="black",conf.int=FALSE,fp.points=1:length(w.vals))
@@ -311,13 +311,13 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							if (verbose) print(wtFC.ratio.n)
 							
 							
-							avg.Fid1<-rbind(avg.Fid1,avgFid1.n)
-							avg.Fid2<-rbind(avg.Fid2,avgFid2.n)
-							avg.Comm<-rbind(avg.Comm,avgComm.n)
+							#avg.Fid1<-rbind(avg.Fid1,avgFid1.n)
+							#avg.Fid2<-rbind(avg.Fid2,avgFid2.n)
+							#avg.Comm<-rbind(avg.Comm,avgComm.n)
 							
 							
-							avg.FCratios.List<-rbind(avg.FCratios.List,FC.ratio.n)
-							avg.wtFCratios.List<-rbind(avg.wtFCratios.List,wtFC.ratio.n)
+							#avg.FCratios.List<-rbind(avg.FCratios.List,FC.ratio.n)
+							#avg.wtFCratios.List<-rbind(avg.wtFCratios.List,wtFC.ratio.n)
 							#FCRatios.List<-c(FCRatios.List,list(sim.res$FC.ratios$f.c))
 							#wtFCRatios.List<-c(wtFCRatios.List,list(sim.res$FC.ratios$wtf.c))
 							

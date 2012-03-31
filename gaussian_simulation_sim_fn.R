@@ -561,7 +561,7 @@ run.mc.rep.with.seed <-function(seed){
 	#seeds[[mc]]<-list(.Random.seed)
 	sink()
 	
-	
+	sink(file=file.path('logs',paste("debug-G-mc-rep-",seed,".txt",collapse="")))
 	print("Running run.mc.replicate function")
 	tmp<- run.mc.replicate("gaussian",p, r, q, c.val,  ##try(
 			d           = d,
@@ -587,7 +587,7 @@ run.mc.rep.with.seed <-function(seed){
 			power.comparison.test=power.comparison.test) 
 	#)
 	
-	
+	sink()
 	return(tmp)	
 	
 }
