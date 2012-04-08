@@ -260,13 +260,13 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							
 							plot.graph.with.CI(Fid1,"Fid and Comm Terms","red",conf.int=TRUE,   add=FALSE,fp.points=w.vals,
 									customx.labels=NULL,customy.labels=NULL,ispowercurve=FALSE)
-								traceback()
+								
 							plot.graph.with.CI(Fid2,"Fid and Comm Terms","orange",conf.int=TRUE,add=TRUE,fp.points=w.vals,
 									customx.labels=NULL,customy.labels=NULL,ispowercurve=FALSE)
-								traceback()
+							
 							plot.graph.with.CI(Comm,"Fid and Comm Terms","blue",conf.int=TRUE,  add=TRUE,fp.points=w.vals,
 									customx.labels=NULL,customy.labels=NULL,ispowercurve=FALSE)
-							traceback()
+						
 							fname<- file.path('graphs',paste(c(model,"-FidCommTerms-n",n,"-",ifelse(oos,"OOS","noOOS"),"c",c.val),collapse="",sep=""))
 							if(!run.in.linux&(!run.for.Sweave))  savePlot(paste(fname,".pdf",sep="",collapse=""),type="pdf")
 							if(!run.in.linux&(!run.for.Sweave))  savePlot(filename=paste(fname,".ps",sep="",collapse=""),type="ps")
