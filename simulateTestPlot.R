@@ -150,7 +150,9 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							print(p.vals.two.sided)
 							sink()
 							#two-sided mcnemars.test logging end
-
+							dev.off()
+							
+							
 							if( run.in.linux) X11() else {windows()}
 							hist(p.vals.two.sided,15,main="Histogram of p-values")
 							
@@ -162,7 +164,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							
 							if(!run.in.linux&(!run.for.Sweave)) savePlot(paste(model,c.val,"p-values-McNemars-hist",".ps",sep="",collapse=""),"ps")
 						
-              
+							dev.off()
               
               
               if( run.in.linux) X11() else {windows()}
@@ -176,7 +178,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							
 							if(!run.in.linux&(!run.for.Sweave)) savePlot(paste(model,c.val,"p-values-McNemars-kde",".ps",collapse="",sep=""),"ps")
 							
-              
+							dev.off()
               
   #            if( run.in.linux) X11() else {windows()}
 							
@@ -272,7 +274,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							if(!run.in.linux&(!run.for.Sweave))  savePlot(filename=paste(fname,".ps",sep="",collapse=""),type="ps")
 							if(!run.in.linux&(!run.for.Sweave)) savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
 														
-                
+							dev.off()
                 
 							if( run.in.linux) X11() else {windows()}
 							plot.default(x=params$w.vals,y=rep(0,length(params$w.vals)),ylim=c(0,1.5))
@@ -291,7 +293,7 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							if(!run.in.linux&(!run.for.Sweave))  savePlot(paste(fname,".pdf",sep="",collapse=""),type="pdf")
 							if(!run.in.linux&(!run.for.Sweave))  savePlot(filename=paste(fname,".ps",sep="",collapse=""),type="ps")
 							if(!run.in.linux&(!run.for.Sweave)) savePlot(filename=paste(fname,".png",collapse="",sep=""),type="png")
-							
+							dev.off()
 							
 							avgFid1.n<-colMeans(Fid1)
 							avgFid2.n<-colMeans(Fid2)
@@ -343,14 +345,20 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 							}
 						
 						
-						print(which.max(avg.power.w))
-						print(params$w.vals)	
+						#print(which.max(avg.power.w))
+						#print(params$w.vals)	
 						
+						#w
 						max.w <- which.max(avg.power.w)
 						sim.res$wstar.estim <- params$w.vals [max.w]
-						print(wstar.estim)
-						#wstar.List<-c(wstar.List,wstar.estim)
+						if (verbose) print("Estimate of wstar for average power curve")
+						if (verbose) print(sim.res$wstar.estim)
+						#sink("debug-wstar.txt")
+						print(sim.res$power[,,6])
+						sim.res$wstar.idx.estim.mc<- apply(sim.res$power[,,6],2,function(x) which(x==max(x)))
 						
+						print(sim.res$wstar.idx.estim.mc)
+						#sink()
 							avg.power.w.2 <-rep(0,length(w.val.len))
 							for (i in 1:w.val.len){
 								beta.w<-sim.res$power[i,,6]
