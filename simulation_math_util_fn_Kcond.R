@@ -27,9 +27,36 @@ run.mc.replicate.Kcond<-function(model,p, r, q, c.val,K,
 		
 		verbose=FALSE,
 		power.comparison.test=TRUE){
+	
+	
+	if (verbose) print("verbose logging")
 	try.flag <- try({
 				print(paste("random ",runif(1)))
 				print("run.mc.replicate")
+				print("running parametres")
+				print(paste(model,p, r, q, c.val,K,
+		d          ,
+		p.prime.cond    ,   # cca arguments , signal+noise dimension		
+		Wchoice    , #How to impute L
+		pre.scaling,  #Make the measurement spaces have the same scale
+		oos        ,  #embed test observations by Out-of-sampling  ?
+		alpha      ,  
+		n , m ,    #Number of training and test observations
+		hardest.alt,
+		old.gauss.model.param,
+		separability.entries.w,  
+		compare.pom.cca,  # Run PoM and CCA to compare with JOFC?
+		oos.use.imputed,
+		level.mcnemar,  #At what alpha, should unweighted(w=0.5) and optimal w^* be compared
+		def.w,           #The null hypothesis is that power(def.w) >= power(rival.w) (by default ,def.w is the w for the unweighted case which equals 0.5)
+		rival.w,        
+		proc.dilation, #when investigating convergence of JOFC to PoM, should Procrustes analysis of configurations include the dilation component?
+		assume.matched.for.oos, 
+		w.vals,				  #w values to use for JOFC
+		wt.equalize,
+		
+		verbose,
+		power.comparison.test,sep=" ",collapse="    "))
 				#
 				# The followin if statement is Not really necessary, unless we change our mind about rival.w being the best in every MC replicate
 				# and want to make rival.w a constant (preferably the best overall)
@@ -68,7 +95,7 @@ run.mc.replicate.Kcond<-function(model,p, r, q, c.val,K,
 				sigma <- matrix(0,p,p)
 				means <- array(0 , dim=c(w.max.index,2*d))
 				
-				
+				if (verbose())
 				
 				if (is.null(alpha)) {
 					if (model=="gaussian"){
