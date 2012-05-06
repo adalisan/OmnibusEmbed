@@ -354,7 +354,10 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 						if (verbose) print("Estimate of wstar for average power curve")
 						if (verbose) print(sim.res$wstar.estim)
 						#sink("debug-wstar.txt")
-						print(sim.res$power[,,6])
+						#print(sim.res$power[,,6])
+						
+						#Which w value was the best w for the highest number of mc replicates
+						#Note that multiple w.values might have the best power
 						sim.res$wstar.idx.estim.mc<- apply(sim.res$power[,,6],2,function(x) which(x==max(x)))
 						
 						print(sim.res$wstar.idx.estim.mc)
@@ -401,6 +404,6 @@ simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
 	)	
 	print("wstar.estim")
 	print(sim.result$wstar.estim)
-	#sim.result$wstar<- wstar.estim
+	sim.result$wstar<- sim.result$wstar.estim
 	return(sim.result)
 }
