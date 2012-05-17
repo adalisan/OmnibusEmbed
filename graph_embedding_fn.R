@@ -45,14 +45,14 @@ jofc<-function(G,Gp,
 		w.vals.vec,
 		graph.is.directed=FALSE,
 		oos=TRUE,
-    notconnect.wt=10,
+		notconnect.wt=10,
 		use.weighted.graph=TRUE,
 		wt.matrix.1=NULL,
 		wt.matrix.2=NULL,
 		sep.graphs=TRUE # if TRUE, treat two graphs separately to compute dissimilarities
 #and impute W (off-diagonalblock matrix)
 # if FALSE, join the graphs and compute dissimilarities from joint graph
-	    
+
 ){
 	
 	n<-nrow(G)
@@ -67,9 +67,9 @@ jofc<-function(G,Gp,
 		print("Using adjacency for computing dissimilarities")
 		Graph.1<-graph.adjacency(G, mode=graph.mode)
 		Graph.2<-graph.adjacency(Gp,mode=graph.mode)
-    A.M<- diag(n)
-    A.M[!in.sample.ind[1:n]]<- 0 # Make sure vertices that are NOT known to be matched
-								#are not connected
+		A.M<- diag(n)
+		A.M[!in.sample.ind[1:n]]<- 0 # Make sure vertices that are NOT known to be matched
+		#are not connected
 		G.comb<-omnibusM(G,Gp,A.M)
 		Graph.M <- graph.adjacency(G.comb,
 				weighted= NULL ,mode=graph.mode)
@@ -79,11 +79,11 @@ jofc<-function(G,Gp,
 		# make the weight matrix from adjacency matrix. Those with same-condition edges have weights of wt.connect/10
 		#those  with no edges have weights of wt.connect. Those with "matched edges has weights of matched.cost
 		A.M<- matrix(500,n,n)
-    
+		
 		diag(A.M) <- matched.cost
 		
-     A.M[!in.sample.ind[1:n]]<- 0
-    if (is.null(wt.matrix.1)){
+		A.M[!in.sample.ind[1:n]]<- 0
+		if (is.null(wt.matrix.1)){
 			#Given adjacency matrix, generate weighted graph
 			wt.matrix.1 <- G
 			wt.matrix.2 <- Gp
@@ -100,7 +100,7 @@ jofc<-function(G,Gp,
 			else{
 				Graph.1<-graph.adjacency(wt.matrix.1,  weighted= TRUE, mode=graph.mode)
 				Graph.2<-graph.adjacency(wt.matrix.2,  weighted= TRUE, mode=graph.mode)
-			
+				
 				ind.vec<-c(rep(TRUE,n),in.sample.ind[n+(1:n)])
 				
 				Graph.M.1 <- graph.adjacency(G.comb.w[ind.vec,ind.vec],weighted= TRUE ,
@@ -125,11 +125,11 @@ jofc<-function(G,Gp,
 				G.comb.w<-omnibusM(wt.matrix.1,wt.matrix.2,A.M)
 				Graph.1<-graph.adjacency(wt.matrix.1,weighted= TRUE, mode=graph.mode)
 				Graph.2<-graph.adjacency(wt.matrix.2,weighted= TRUE,mode=graph.mode)
-			   Graph.M<-graph.adjacency(G.comb.w,weighted= TRUE ,
+				Graph.M<-graph.adjacency(G.comb.w,weighted= TRUE ,
 						mode=graph.mode)
 				ind.vec<-c(rep(TRUE,n),in.sample.ind[n+(1:n)])
 				
-		
+				
 				Graph.M.1 <- graph.adjacency(G.comb.w[ind.vec,ind.vec],weighted= TRUE ,
 						mode=graph.mode)
 				ind.vec<-c(in.sample.ind[(1:n)],rep(TRUE,n))
@@ -193,7 +193,7 @@ jofc<-function(G,Gp,
 		
 		test.samp.size<-nrow(Y.embed)/2
 		Dist=as.matrix(dist(Y.embed))[1:test.samp.size,(1:test.samp.size)+test.samp.size]
-				
+		
 		J<-c(J,list(Dist))
 		
 	}
@@ -208,43 +208,43 @@ jofc.diffusion.dist<-function(G,Gp,
 		d.dim,
 		w.vals.vec,
 		graph.is.directed=FALSE,
-    oos=TRUE,
-	
+		oos=TRUE,
+		
 		wt.matrix.1=NULL,
 		wt.matrix.2=NULL,
-		sep.graphs=TRUE # if TRUE, treat two graphs separately to compute dissimilarities
+		sep.graphs=TRUE ,# if TRUE, treat two graphs separately to compute dissimilarities
 #and impute W (off-diagonalblock matrix)
 # if FALSE, join the graphs and compute dissimilarities from joint graph
-		
+	   T.param=1
 ){
 	n<-nrow(G)
 	graph.mode<- ifelse(graph.is.directed,"directed","undirected")
-	
+	D.M<-matrix(0,2*n,2*n)
 	
 	if (sep.graphs){
 		if (is.null(wt.matrix.1)){
-			D.1<-diff.dist.fun(G)
-			D.2<-diff.dist.fun(Gp)
+			D.1<-diff.dist.fun(G,T.param)
+			D.2<-diff.dist.fun(Gp,T.param)
 		} else{
-			D.1<-diff.dist.fun(wt.matrix.1)
-			D.2<-diff.dist.fun(wt.matrix.2)
+			D.1<-diff.dist.fun(wt.matrix.1,T.param)
+			D.2<-diff.dist.fun(wt.matrix.2,T.param)
 		}
 		D.w<- (D.1+D.2)/2
 		
 		D.M<- omnibusM(D.1,D.2,D.w)
-    	}	else{
+	}	else{
 		if (is.null(wt.matrix.1)){
-			 A.M<- diag(n)
-			 A.M[!in.sample.ind[1:n]]<- 0
+			A.M<- diag(n)
+			A.M[!in.sample.ind[1:n]]<- 0
 			G.comb<-omnibusM(G,Gp,A.M)
 			#compute dissimilarities in joint graph
-			D.M<-diff.dist.fun(G.comb)
+			D.M<-diff.dist.fun(G.comb,T.param)
 			D.M[is.infinite(D.M)]<-NA
 		} else{
 			
 			Wt.M<-omnibusM(wt.matrix.1,wt.matrix.2,(wt.matrix.1+wt.matrix.2)/2)
-			D.M<-diff.dist.fun(Wt.M)
-                 D.M[is.infinite(D.M)]<-NA
+			D.M<-diff.dist.fun(Wt.M,T.param)
+			D.M[is.infinite(D.M)]<-NA
 		}
 		
 	}
@@ -259,7 +259,7 @@ jofc.diffusion.dist<-function(G,Gp,
 			w.vals=w.vals.vec)	
 	J<-list()
 	for (Y.embed in Embed.List){
-
+		
 		test.m<-nrow(Y.embed)/2
 		Dist=as.matrix(dist(Y.embed))[1:test.m,(1:test.m)+test.m]
 		J<-c(J,list(Dist))
@@ -278,9 +278,9 @@ jofc.diffusion.dist<-function(G,Gp,
 
 
 Embed.Nodes <-function(D.omnibus,
-                       in.sample.ind,
-                       oos, 
-                       d,
+		in.sample.ind,
+		oos, 
+		d,
 		wt.equalize=FALSE,
 		separability.entries.w=FALSE,
 		assume.matched.for.oos = FALSE ,w.vals){
@@ -289,17 +289,17 @@ Embed.Nodes <-function(D.omnibus,
 	Y.embeds<-list()
 	oos.use.imputed<- FALSE
 	w.max.index<-length(w.vals)
-	  n<-sum(in.sample.ind)/2
-		test.m<-sum(!in.sample.ind)/2
+	n<-sum(in.sample.ind)/2
+	test.m<-sum(!in.sample.ind)/2
 	#in.sample.ind<-which(in.sample.ind)
 	
 	# Embed in-sample using different weight matrices (differentw values)
 	if (oos){	
-	
+		
 		D.in <- D.omnibus[in.sample.ind,in.sample.ind]
 		init.conf=NULL
 		if (sum(is.na(D.in))==0) {		
-				init.conf<-cmdscale(d=D.in,k=d)
+			init.conf<-cmdscale(d=D.in,k=d)
 		}	
 		
 		
@@ -376,61 +376,61 @@ Embed.Nodes <-function(D.omnibus,
 		}
 		
 	}  else{
-    
-    ind.vec.1<-c(in.sample.ind[1:(n+test.m)],rep(FALSE,n+test.m))  
-    ind.vec.2<-c(rep(FALSE,n+test.m),in.sample.ind[n+test.m+(1:(n+test.m))])
-    
-    ind.vec.3<-c(!in.sample.ind[1:(n+test.m)],rep(FALSE,n+test.m))  
-    ind.vec.4<-c(rep(FALSE,n+test.m),!in.sample.ind[n+test.m+(1:(n+test.m))])
- 
-     
-    D1<- rbind(
-  				cbind(D.omnibus[ind.vec.1,ind.vec.1],D.omnibus[ind.vec.1,ind.vec.3]),
-					cbind(D.omnibus[ind.vec.3,ind.vec.1],D.omnibus[ind.vec.3,ind.vec.3])
-                )
-    
-    D2<- rbind(
-    			cbind(D.omnibus[ind.vec.2,ind.vec.2],D.omnibus[ind.vec.2,ind.vec.4]),
-  				cbind(D.omnibus[ind.vec.4,ind.vec.2],D.omnibus[ind.vec.4,ind.vec.4])
-    )
-    
-    
-    omnibus.D1.D2<- omnibusM(D1,D2,(D1+D2)/2)
-  		init.omnibus<-omnibus.D1.D2  
-      init.omnibus[2*n+test.m+(1:test.m),1:(n+test.m)]<-0    
-     init.omnibus[1:(n+test.m),2*n+test.m+(1:test.m)]<-0
-  
-      init.omnibus[n+test.m+(1:n),(n+1):(n+test.m)]<-0    
-      init.omnibus[(n+1):(n+test.m),n+test.m+(1:n)]<-0
-      
-      init.conf=NULL
-  	if (sum(is.na(omnibus.D1.D2))==0) {		
-				init.conf<-cmdscale(d=init.omnibus,k=d)
-		}
-    
-      W.Mat<-w.val.to.W.mat(w.vals[1],2*(n+test.m),separability.entries.w,wt.equalize)
-      W.Mat[2*n+test.m+(1:test.m),1:(n+test.m)]<-0  	
-      W.Mat[1:(n+test.m),2*n+test.m+(1:test.m)]<-0
-  
-      W.Mat[n+test.m+(1:n),(n+1):(n+test.m)]<-0    
-      W.Mat[(n+1):(n+test.m),n+test.m+(1:n)]<-0
-	
-	 
-      W.Mat[is.na(omnibus.D1.D2)]<-0
-		 omnibus.D1.D2[is.na(omnibus.D1.D2)] <-1
 		
-    omnibus.D1.D2[W.Mat==0] <- 20
+		ind.vec.1<-c(in.sample.ind[1:(n+test.m)],rep(FALSE,n+test.m))  
+		ind.vec.2<-c(rep(FALSE,n+test.m),in.sample.ind[n+test.m+(1:(n+test.m))])
+		
+		ind.vec.3<-c(!in.sample.ind[1:(n+test.m)],rep(FALSE,n+test.m))  
+		ind.vec.4<-c(rep(FALSE,n+test.m),!in.sample.ind[n+test.m+(1:(n+test.m))])
+		
+		
+		D1<- rbind(
+				cbind(D.omnibus[ind.vec.1,ind.vec.1],D.omnibus[ind.vec.1,ind.vec.3]),
+				cbind(D.omnibus[ind.vec.3,ind.vec.1],D.omnibus[ind.vec.3,ind.vec.3])
+		)
+		
+		D2<- rbind(
+				cbind(D.omnibus[ind.vec.2,ind.vec.2],D.omnibus[ind.vec.2,ind.vec.4]),
+				cbind(D.omnibus[ind.vec.4,ind.vec.2],D.omnibus[ind.vec.4,ind.vec.4])
+		)
+		
+		
+		omnibus.D1.D2<- omnibusM(D1,D2,(D1+D2)/2)
+		init.omnibus<-omnibus.D1.D2  
+		init.omnibus[2*n+test.m+(1:test.m),1:(n+test.m)]<-0    
+		init.omnibus[1:(n+test.m),2*n+test.m+(1:test.m)]<-0
+		
+		init.omnibus[n+test.m+(1:n),(n+1):(n+test.m)]<-0    
+		init.omnibus[(n+1):(n+test.m),n+test.m+(1:n)]<-0
+		
+		init.conf=NULL
+		if (sum(is.na(omnibus.D1.D2))==0) {		
+			init.conf<-cmdscale(d=init.omnibus,k=d)
+		}
+		
+		W.Mat<-w.val.to.W.mat(w.vals[1],2*(n+test.m),separability.entries.w,wt.equalize)
+		W.Mat[2*n+test.m+(1:test.m),1:(n+test.m)]<-0  	
+		W.Mat[1:(n+test.m),2*n+test.m+(1:test.m)]<-0
+		
+		W.Mat[n+test.m+(1:n),(n+1):(n+test.m)]<-0    
+		W.Mat[(n+1):(n+test.m),n+test.m+(1:n)]<-0
+		
+		
+		W.Mat[is.na(omnibus.D1.D2)]<-0
+		omnibus.D1.D2[is.na(omnibus.D1.D2)] <-1
+		
+		omnibus.D1.D2[W.Mat==0] <- 20
 		new.embed <- smacofM (omnibus.D1.D2,
-                          ndim=d    ,	W=W.Mat        ,
+				ndim=d    ,	W=W.Mat        ,
 				init    = init.conf,
 				verbose = FALSE,
 				itmax   = 1000,
 				eps     = 1e-6)
-    
-    
-    Y.embeds<-c(Y.embeds,list(new.embed[!in.sample.ind,]))
+		
+		
+		Y.embeds<-c(Y.embeds,list(new.embed[!in.sample.ind,]))
 	}
-  
+	
 	
 	Y.embeds
 	
@@ -442,41 +442,41 @@ solveMarriage<- function(Dist){
 	
 }
 
-  cmds <- function (D.1,D.2,in.sample.ind,d.dim,oos) {
-        n <- length(in.sample.ind)/2
-        m<- sum(in.sample.ind)/2
-  			myD.M = D.M # i use just the object D.M ... none of the original entries!
-  			myD.M[1:n,1:n]=D.1
-  			myD.M[(n+1):(2*n),(n+1):(2*n)]=D.2
-  			myD.M[1:n,(n+1):(2*n)]=(D.1+D.2)/2
-  			myD.M[(n+1):(2*n),1:n]=(D.1+D.2)/2
-  			for(i in 1:n) for(j in (n+m+1):(2*n)) myD.M[i,j] = myD.M[j,i] = c.imp
-  			for(i in (m+1):n) for(j in (n+1):(2*n)) myD.M[i,j] = myD.M[j,i] = c.imp
-  			
-        
-         if (oos){
-          
-         myD.M.in<- myD.M[in.sample.ind,in.sample.ind]
-    			ccc = cmdscale(myD.M.in,k=d.dim,eig=T)
-   			#plot(ccc$eig)
-   			#pairs(ccc$points , col=colvec,pch=c(Ln,Ln))
-   			#plot(ccc$points[,c(2,3)] , col=colvec,pch=c(Ln,Ln))
-         Y.emb<-oosMDS(myD.M,X=ccc$points, w=ifelse(in.sample.ind,1,0),init="gower")
-         
-  # 			
-   			 U = as.matrix(dist(Y.emb[,c(2,3)]))
-         } else {
-        
-        
-    		ccc = cmdscale(myD.M,k=d.dim,eig=T)
-  			#plot(ccc$eig)
-  			#pairs(ccc$points , col=colvec,pch=c(Ln,Ln))
-  			#plot(ccc$points[,c(2,3)] , col=colvec,pch=c(Ln,Ln))
-  			
-  			U = as.matrix(dist(ccc$points[ c((m+1):(n),(n+m+1):(n+n)) ,c(2,3)]))
-   		  }
-        return(U[1:(n-m),(n-m+1):(2*(n-m))])
-			}
+cmds <- function (D.1,D.2,in.sample.ind,d.dim,oos) {
+	n <- length(in.sample.ind)/2
+	m<- sum(in.sample.ind)/2
+	myD.M = D.M # i use just the object D.M ... none of the original entries!
+	myD.M[1:n,1:n]=D.1
+	myD.M[(n+1):(2*n),(n+1):(2*n)]=D.2
+	myD.M[1:n,(n+1):(2*n)]=(D.1+D.2)/2
+	myD.M[(n+1):(2*n),1:n]=(D.1+D.2)/2
+	for(i in 1:n) for(j in (n+m+1):(2*n)) myD.M[i,j] = myD.M[j,i] = c.imp
+	for(i in (m+1):n) for(j in (n+1):(2*n)) myD.M[i,j] = myD.M[j,i] = c.imp
+	
+	
+	if (oos){
+		
+		myD.M.in<- myD.M[in.sample.ind,in.sample.ind]
+		ccc = cmdscale(myD.M.in,k=d.dim,eig=T)
+		#plot(ccc$eig)
+		#pairs(ccc$points , col=colvec,pch=c(Ln,Ln))
+		#plot(ccc$points[,c(2,3)] , col=colvec,pch=c(Ln,Ln))
+		Y.emb<-oosMDS(myD.M,X=ccc$points, w=ifelse(in.sample.ind,1,0),init="gower")
+		
+		# 			
+		U = as.matrix(dist(Y.emb[,c(2,3)]))
+	} else {
+		
+		
+		ccc = cmdscale(myD.M,k=d.dim,eig=T)
+		#plot(ccc$eig)
+		#pairs(ccc$points , col=colvec,pch=c(Ln,Ln))
+		#plot(ccc$points[,c(2,3)] , col=colvec,pch=c(Ln,Ln))
+		
+		U = as.matrix(dist(ccc$points[ c((m+1):(n),(n+m+1):(n+n)) ,c(2,3)]))
+	}
+	return(U[1:(n-m),(n-m+1):(2*(n-m))])
+}
 
 
 
@@ -522,7 +522,7 @@ diff.dist<-function(P){
 }
 
 
-diff.dist.fun<-function(A){
+diff.dist.fun<-function(A,T.diff){
 	P<-transition.matrix(A,dissimilarity=FALSE)
 	D<-diffusion.distance(P, T.diff, directed = FALSE)
 	D

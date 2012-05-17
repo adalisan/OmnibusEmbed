@@ -234,10 +234,10 @@ jofc.diffusion.dist.many<-function(G,Gp,corr.list,
 	
 		wt.matrix.1=NULL,
 		wt.matrix.2=NULL,
-		sep.graphs=TRUE # if TRUE, treat two graphs separately to compute dissimilarities
+		sep.graphs=TRUE, # if TRUE, treat two graphs separately to compute dissimilarities
 #and impute W (off-diagonalblock matrix)
 # if FALSE, join the graphs and compute dissimilarities from joint graph
-		
+		T.param=1
 ){
 	n.1<-nrow(G)
 	n.2<-nrow(Gp)
@@ -249,11 +249,11 @@ jofc.diffusion.dist.many<-function(G,Gp,corr.list,
 	
 	if (sep.graphs){
 		if (is.null(wt.matrix.1)){
-			D.1<-diff.dist.fun(G)
-			D.2<-diff.dist.fun(Gp)
+			D.1<-diff.dist.fun(G,T.param)
+			D.2<-diff.dist.fun(Gp,T.param)
 		} else{
-			D.1<-diff.dist.fun(wt.matrix.1)
-			D.2<-diff.dist.fun(wt.matrix.2)
+			D.1<-diff.dist.fun(wt.matrix.1,T.param)
+			D.2<-diff.dist.fun(wt.matrix.2,T.param)
 		}
 		D.w<- matrix(NA,n.1,n.2)
 		for (corr.i in corr.list){
@@ -276,7 +276,7 @@ jofc.diffusion.dist.many<-function(G,Gp,corr.list,
 			 #A.M[!in.sample.ind[1:n]]<- 0
 			G.comb<-omnibusM(G,Gp,A.M)
 			#compute dissimilarities in joint graph
-			D.M<-diff.dist.fun(G.comb)
+			D.M<-diff.dist.fun(G.comb,T.param)
 			D.M[is.infinite(D.M)]<-NA
 		} else{
 			wt.W<-matrix(Inf,n.1,n.2)
@@ -290,7 +290,7 @@ jofc.diffusion.dist.many<-function(G,Gp,corr.list,
 			
 			
 			Wt.M<-omnibusM(wt.matrix.1,wt.matrix.2,wt.W)
-			D.M<-diff.dist.fun(Wt.M)
+			D.M<-diff.dist.fun(Wt.M,T.param)
             D.M[is.infinite(D.M)]<-NA
 		}
 		
@@ -493,15 +493,20 @@ present.many<-function(M,corr.list,in.sample.ind.1,in.sample.ind.2){
 	F.meas.list<-rep(0,test.m.2)
 	for (test.i in 1:test.m.2){
 		M.i<- test.i+test.m.1
-		match.index<- M[M.i]
-		matches.i.indic <- M[1:test.m.1]==match.index
+		 
+		match.label<- M[M.i]
+		#match.label:The match label for test.i^{th} instance in the second group
+		matches.i.indic <- M[1:test.m.1]==match.label
+		#matches.i.indic: the indicator(logical) vector for which of the instances in the first group
+		#match test.i^{th} instance in the second group
 		matches.indices.i<- test.m.1.indices[matches.i.indic]
+		#matches.indices.i the indices for the instances the indicator vector
 		for (corr.i in corr.list){
-			for ( j in corr.i[[2]]){
-				if (j==test.m.2.indices[test.i]){
-					true.matches<-matches.indices.i%in%corr.i[[1]]
-					precision<- sum(true.matches)/length(true.matches)
-					recall <-sum(true.matches)/length(corr.i[[1]])
+			for ( j in corr.i[[2]]){ # necessary only  if it's k-k matching instead  
+				if (j==test.m.2.indices[test.i]){ #sanity check
+					true.matches<-matches.indices.i%in%corr.i[[1]] #which of the matches found are in the list of true matches 
+					precision<- sum(true.matches)/length(true.matches) #what proportion of the matches found are correct
+					recall <-sum(true.matches)/length(corr.i[[1]]) #what proportion of the true matches are found
 					p.r<-(precision+recall)
 					F.meas<-0
 					if(p.r!=0)
@@ -546,7 +551,7 @@ diff.dist<-function(P){
 }
 
 
-diff.dist.fun<-function(A){
+diff.dist.fun<-function(A,T.diff){
 	P<-transition.matrix(A,dissimilarity=FALSE)
 	D<-diffusion.distance(P, T.diff, directed = FALSE)
 	D
