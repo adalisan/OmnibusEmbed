@@ -411,6 +411,9 @@ gaussian_simulation_jofc_tradeoff_sf_Kcond <- function(p, r, q, c.val,K,
 	
 	
 	p.prime.cond = p+q
+	sfLibrary(abind)
+	sfLibrary(dmt)
+	sfLibrary(MCMCpack)
 	sfExport( "p", "r", "q", "c.val", "K",  ##try(
 			"d","p.prime.cond",
 			"Wchoice" ,
@@ -487,17 +490,19 @@ gaussian_simulation_jofc_tradeoff_sf_Kcond <- function(p, r, q, c.val,K,
 }
 
 run.mc.rep.with.seed.Kcond <-function(seed){
-	
+	sink(file=file.path('logs',paste("Kcond-debug-G-",seed,".txt",collapse="")))
 	source(file.path("lib","simulation_math_util_fn_Kcond.R"))
 	source(file.path("lib","oosMDS.R"))
 	source(file.path("lib","smacofM.R"))
 	source(file.path("lib","oosIM.R"))
-	
+	require(MASS)
+	require(abind)
+	require(dmt)
 	print("Lib functions loaded")
 	
 	
 	
-	sink(file=file.path('logs',paste("Kcond-debug-G-",seed,".txt",collapse="")))
+	
 	set.seed(seed)
 	#if(mc<=4) {for(i in 1:mc) print(mvrnorm(4,mu=rep(0,4),Sigma=diag(4)))}
 	print(runif(2))

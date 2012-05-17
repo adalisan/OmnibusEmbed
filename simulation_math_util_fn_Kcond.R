@@ -30,7 +30,7 @@ run.mc.replicate.Kcond<-function(model,p, r, q, c.val,K,
 	
 	
 	if (verbose) print("verbose logging")
-	try.flag <- try({
+#	try.flag <- try({
 				print(paste("random ",runif(1)))
 				print("run.mc.replicate")
 				print("running parametres")
@@ -95,7 +95,18 @@ run.mc.replicate.Kcond<-function(model,p, r, q, c.val,K,
 				sigma <- matrix(0,p,p)
 				means <- array(0 , dim=c(w.max.index,2*d))
 				
-				if (verbose())
+				if (verbose) print("generating alphas")
+				if (verbose) print(alpha)
+				if (verbose)  print(model)
+				if (verbose)  print(p)
+				if (verbose)  print(K)
+				if (verbose)  print(Posdef)
+				if (verbose)  print(mvrnorm)
+				if (verbose)  print(old.gauss.model.param)
+				
+				
+				if (verbose)  print(K)
+				
 				
 				if (is.null(alpha)) {
 					if (model=="gaussian"){
@@ -108,7 +119,7 @@ run.mc.replicate.Kcond<-function(model,p, r, q, c.val,K,
 					
 					
 				} else {
-					alpha.mc <- alpha[[mc]]
+					alpha.mc <- alpha
 				}
 				
 				if (verbose) print("n pairs of matched points")
@@ -215,7 +226,8 @@ run.mc.replicate.Kcond<-function(model,p, r, q, c.val,K,
 					
 					## ==== cca ====
 					#embed in-sample measurements
-					CCA.results <- run.cca.Kcond(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,pprime.cond=p.prime.cond,d=d,hardest.alt = hardest.alt)
+					CCA.results <- run.cca.Kcond(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,
+							pprime.cond=p.prime.cond,d=d,hardest.alt = hardest.alt,size=size)
 					T0.cca <- CCA.results$T0
 					TA.cca <- CCA.results$TA
 					power.cca.mc <- CCA.results$power
@@ -224,7 +236,8 @@ run.mc.replicate.Kcond<-function(model,p, r, q, c.val,K,
 					if (verbose) print("CCA test statistic complete\n")
 					
 					## ==== pom ====
-					Pom.results  <- run.pom.Kcond(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,embed.dim=d,hardest.alt = hardest.alt)
+					Pom.results  <- run.pom.Kcond(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,
+							embed.dim=d,hardest.alt = hardest.alt,size=size)
 					power.pom.mc <- Pom.results$power
 					
 				}
@@ -439,7 +452,7 @@ run.mc.replicate.Kcond<-function(model,p, r, q, c.val,K,
 				
 				
 				print("end run.mc.replicate")
-				list(power.mc=power.mc,power.cmp=list(cca = power.cca.mc,pom = power.pom.mc,cca.reg =power.cca.reg.mc),
+				func.return<- list(power.mc=power.mc,power.cmp=list(cca = power.cca.mc,pom = power.pom.mc,cca.reg =power.cca.reg.mc),
 						cont.tables=cont.table,
 						config.dist= config.mismatch,
 						min.stress=c(min.stress.for.w.val,pom.stress)
@@ -447,15 +460,15 @@ run.mc.replicate.Kcond<-function(model,p, r, q, c.val,K,
 				#		FidComm.Sum.Terms = FidComm.Sum.Terms,F.to.C.ratio = FC.ratio, wtF.to.C.ratio=FC.ratio.2,
 				#		F.bar.to.C.bar.ratio= FC.ratio.3
 				)
-			}) #end try
+	#		}) #end try
 	
-	if (inherits(try.flag,"try-error")) {
-		print("run.mc.replicate error")
-		sink(file.path('logs',"run.mc.rep-traceback.txt"))
-		traceback()
-		sink()
-	}
-	return(try.flag)
+	#if (inherits(try.flag,"try-error")) {
+	#	print("run.mc.replicate error")
+	#	sink(file.path('logs',"run.mc.rep-traceback.txt"))
+	#	traceback()
+	#	sink()
+	#}
+	return(func.return)
 }
 
 
@@ -810,7 +823,7 @@ run.jofc.Kcond<-function(D.cond.list,w.vals,x.config,y.config,Y.cond.A,D.in.oos.
 	
 }
 
-run.pom.Kcond <- function(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,embed.dim,hardest.alt) {
+run.pom.Kcond <- function(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,embed.dim,hardest.alt,size) {
 	
 	
 	in.n<-attr(D.cond.list[[1]],"Size")
@@ -869,17 +882,17 @@ run.pom.Kcond <- function(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,embed.dim,
 			
 		}
 		
-		if (verbose) print("PoM embedding complete\n")
+		 print("PoM embedding complete\n")
 		
 	}
 	power.pom.mc <- get_power(T0.pom, TA.pom, size)
-	if (verbose) print("PoM test statistic complete \n")
+	 print("PoM test statistic complete \n")
 	
 	return(list(T0=T0.pom,TA=TA.pom,power=power.pom.mc))
 }
 
 
-run.cca.Kcond<-function(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,pprime.cond,d,hardest.alt) {
+run.cca.Kcond<-function(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,pprime.cond,d,hardest.alt,size) {
 	
 	in.n<-attr(D.cond.list[[1]],"Size")
 	oos.n<-dim(D.in.oos.list.0[[1]])[1]-in.n
@@ -932,6 +945,10 @@ run.cca.Kcond<-function(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,pprime.cond,
 			T0.mat[,,m.i]<- as.matrix(dist(t(Y.oos.config.null[m.i,,])))
 			TA.mat[,,m.i]<- as.matrix(dist(t(Y.oos.config.alt[m.i,,])))
 		}
+		
+		print("T0.mat")
+		print(str(T0.mat))
+		
 		T0.cca<-rep(0,oos.n)
 		TA.cca<-rep(0,oos.n)
 		if (hardest.alt){
@@ -946,6 +963,10 @@ run.cca.Kcond<-function(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,pprime.cond,
 			}
 		}
 #		
+		print("T0.cca")
+		#print(T0.cca)
+		print("TA.cca")
+		#print(TA.cca)
 #		d.btw.pairs.null<- array(0,dim=c(m,K-1))
 #		d.btw.pairs.alt <- array(0,dim=c(m,K-1))
 #		for (k in 2:K){
@@ -966,7 +987,7 @@ run.cca.Kcond<-function(D.cond.list,D.in.oos.list.0,D.in.oos.list.A,pprime.cond,
 		
 	}
 	power.cca.mc <- get_power(T0.cca, TA.cca, size)
-	if (verbose) print("PoM test statistic complete \n")
+	print("CCA test statistic complete \n")
 	
 	return(list(T0=T0.cca,TA=TA.cca,power=power.cca.mc))
 	
@@ -1014,8 +1035,8 @@ matched_rnorm_Kcond<- function(n, p,  q, c, r,K, alpha,sigma.alpha,old.gauss.mod
 	sigma.eta <- sigma.beta
 	
 	print("dims of  alpha,sigma")
-	#print(dim(alpha))
-	#print(dim(sigma.beta))
+	print(dim(alpha))
+	print(dim(sigma.beta))
 	for (i in 1:n) {
 		
 		signals[i, ,] <- t(mvrnorm(K, alpha[i,],sigma.beta))
@@ -1028,14 +1049,17 @@ matched_rnorm_Kcond<- function(n, p,  q, c, r,K, alpha,sigma.alpha,old.gauss.mod
 	for (k in 1:K){
 		noise[,,k] <-mvrnorm(n, rep(0,q), noise.sigma.1)
 	}
+	
+	print("noise dimensions generated")
 	signals.wt.noise <-list()
 	if (c == 0) {
 		return(list(X=signals	,sigma.beta=sigma.beta	)	)
 		
 	} else {
 		
-		
+		print(abind)
 		signals.wt.noise <-abind((1-c)*signals, c*noise,along=2)
+		print("combined signals.with.noise")
 		
 		return(list(X=signals.wt.noise	,sigma.beta=sigma.beta	)	)		
 	}
@@ -1515,22 +1539,22 @@ omnibusM.Kcond<-function(D.cond.list, intercondition.diss)
 #	}
 #	
 #	
-#	Posdef <- function (dim, maxev = 1)
-#	## Generating a random positive-definite matrix
-#	## Eigenvalues are generated from uniform(0, maxev)
-#	{
-#		ev = runif(dim-1, 0, maxev)
-#		ev <- c(ev,maxev)
-#		Z <- matrix(ncol=dim, rnorm(dim^2))
-#		decomp <- qr(Z)
-#		Q <- qr.Q(decomp) 
-#		R <- qr.R(decomp)
-#		d <- diag(R)
-#		ph <- d / abs(d)
-#		O <- Q %*% diag(ph)
-#		Z <- t(O) %*% diag(ev) %*% O
-#		return(Z)
-#	}
+	Posdef <- function (dim, maxev = 1)
+	## Generating a random positive-definite matrix
+	## Eigenvalues are generated from uniform(0, maxev)
+	{
+		ev = runif(dim-1, 0, maxev)
+		ev <- c(ev,maxev)
+		Z <- matrix(ncol=dim, rnorm(dim^2))
+		decomp <- qr(Z)
+		Q <- qr.Q(decomp) 
+		R <- qr.R(decomp)
+		d <- diag(R)
+		ph <- d / abs(d)
+		O <- Q %*% diag(ph)
+		Z <- t(O) %*% diag(ev) %*% O
+		return(Z)
+	}
 #	
 #	## polarity <- function(X, Xstar)
 #	## ## Change the signs of each column of X to best match Xstar
