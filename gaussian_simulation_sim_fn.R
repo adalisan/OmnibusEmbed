@@ -452,7 +452,8 @@ gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
 			"w.vals",
 			"wt.equalize",
 			"verbose",
-			"power.comparison.test" )
+			"power.comparison.test",
+			"cca.reg")
 	
 	
 	print("Starting parallelization in gaussian_simulation_jofc_tradeoff_sf") 
@@ -584,7 +585,9 @@ run.mc.rep.with.seed <-function(seed){
 			w.vals=w.vals,
 			wt.equalize=wt.equalize,
 			verbose=verbose,
-			power.comparison.test=power.comparison.test) 
+			power.comparison.test=power.comparison.test,
+			cca.reg=cca.reg
+	) 
 	#)
 	
 	sink()
