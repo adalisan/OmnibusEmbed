@@ -892,7 +892,7 @@ JOFC.Insample.Embed <-function(D,ndimens,w.vals,sep.err.w,init.conf,wt.equalize)
 		Weight.Mat[is.na(D)]<-0
 		D[is.na(D)] <-1
 		
-		new.embed <- smacofM(D,ndimens    ,	W=Weight.Mat        ,
+		new.embed <- smacofM(D,ndim=ndimens    ,	W=Weight.Mat        ,
 				init    = init.conf,
 				verbose = FALSE,
 				itmax   = 1000,

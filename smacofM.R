@@ -21,12 +21,37 @@ smacofM <- function(D,
     }
     distW <- as.dist(W)
     distD <- as.dist(D)
+    if ((sum(is.null(distW))>0) |(sum(is.na(distW))>0)) {
+   stop("invalid distW: strees can't be computed")}
+    if ((sum(is.null(distD))>0) |(sum(is.na(distD))>0) ) {
+   stop("invalid distD: strees can't be computed")}
     require(MASS)
+    require(MCMCpack)
     if (is.null(init)) {
         X <- cmdscale(D, ndim)
     } else {
         X <- init
     }
+    
+    
+   if ((sum(is.null(X))>0) |(sum(is.na(X))>0)| (sum(is.infinite(X))>0)| (ncol(X)==0)) {
+    X <- mvrnorm(n, mu = rep(0,ndim), Sigma = max(D,na.rm=TRUE)*diag(ndim))
+       X <- matrix(X, nrow=n, ncol=ndim)
+     sink("debug.X.n.txt")
+    print(D)
+   print(ndim)
+    print(X)
+    print(str(X))
+
+        sink()
+  }
+ sink("debug.X.txt")
+   print(ndim)
+    print(X)
+    print(str(X))
+
+        sink()
+
     rownames(X) <- NULL
     V <- -W
     diag(V) <- rowSums(W)
@@ -38,7 +63,17 @@ smacofM <- function(D,
 		
     Vinv <- ginv(V)
     distE <- dist(X)
+ if ((sum(is.null(distE))>0) |(sum(is.na(distE))>0) ) {
+   sink("debug.distE.txt")
+   print(X)
+   print(distE)
+        sink()
+   stop("invalid distE: strees can't be computed")}
+
     stressOld <- sum(distW * (distD - distE)^2)
+   if ((is.null(stressOld))|(is.na(stressOld))) {
+   stop("Old Stress can't be computed")}
+
 
     ##--------------- begin majorization --------------------
     for (itel in 1:itmax) {

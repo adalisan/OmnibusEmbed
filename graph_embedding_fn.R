@@ -295,21 +295,25 @@ Embed.Nodes <-function(D.omnibus,
 	
 	# Embed in-sample using different weight matrices (differentw values)
 	if (oos){	
-		
+		sink("Embedding.debug.txt")
+    print("test.m and n")
+    print(test.m)
+    print(n)
 		D.in <- D.omnibus[in.sample.ind,in.sample.ind]
 		init.conf=NULL
-		if (sum(is.na(D.in))==0) {		
-			init.conf<-cmdscale(d=D.in,k=d)
-		}	
+		#if (sum(is.na(D.in))==0) {		
+	#		init.conf<-cmdscale(d=D.in,k=d)
+	#	}	
 		
 		
 		
 		
 		X.embeds<-JOFC.Insample.Embed(D.in,d,w.vals,separability.entries.w,init.conf=init.conf,
 				wt.equalize=wt.equalize)
+    print("Insample embedding complete")
 		for (l in 1:w.max.index){
-			if (verbose) print("OOS embedding for JOFC for w= \n")
-			if (verbose) print(w.vals[l])
+			print("OOS embedding for JOFC for w= \n")
+			 print(w.vals[l])
 			
 			w.val.l <- w.vals[l]
 			X <- X.embeds[[l]]
@@ -359,7 +363,7 @@ Embed.Nodes <-function(D.omnibus,
 			oos.Weight.mat[is.na(omnibus.oos.D.0)]<-0
 			omnibus.oos.D.0[is.na(omnibus.oos.D.0)]<-1
 			
-			if (verbose) print("JOFC null omnibus OOS embedding \n")
+			 print("JOFC null omnibus OOS embedding \n")
 			
 			Y.0t<-oosIM(D=omnibus.oos.D.0,
 					X=X,
@@ -371,10 +375,11 @@ Embed.Nodes <-function(D.omnibus,
 					isWithin = NULL,
 					bwOos    = FALSE)
 			
-			if (verbose) print("JOFC alternative omnibus OOS embedding \n")
+			 print("JOFC alternative omnibus OOS embedding \n")
 			Y.embeds<-c(Y.embeds,list(Y.0t))
+     
 		}
-		
+		 sink()
 	}  else{
 		
 		ind.vec.1<-c(in.sample.ind[1:(n+test.m)],rep(FALSE,n+test.m))  
