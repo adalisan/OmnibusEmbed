@@ -39,6 +39,116 @@ perturbG<-function(G,q){
 
 
 
+JOFC.graph<-function(G,Gp,
+		in.sample.ind,
+		d.dim,
+		w.vals.vec,
+		graph.is.directed=FALSE
+){
+
+	n<-nrow(G)
+	graph.mode<- ifelse(graph.is.directed,"directed","undirected")
+	
+	Graph.1<-graph.empty(directed=graph.is.directed)
+	Graph.2<-graph.empty(directed=graph.is.directed)
+	Graph.M<-graph.empty(directed=graph.is.directed)
+	
+		#Given adjacency matrix, generate unweighted graph
+		print("Using adjacency for computing dissimilarities")
+		Graph.1<-graph.adjacency(G, mode=graph.mode)
+		Graph.2<-graph.adjacency(Gp,mode=graph.mode)
+		A.M<- diag(n)
+		A.M[!in.sample.ind[1:n],!in.sample.ind[1:n]]<- 0 # Make sure vertices that are NOT known to be matched
+		#are not connected
+		G.comb<-omnibusM(G,Gp,A.M)
+
+	#Now that graphs are generated from adjacency or weight matrices,
+	# compute dissimilarities using shortest.paths	
+	
+		
+		#compute dissimilarities in separate graphs, then impute dissimilarity between different condition
+		D.1<-shortest.paths(Graph.1)
+		D.2<-shortest.paths(Graph.2)
+		D.1[is.infinite(D.1)]<-NA
+		D.2[is.infinite(D.2)]<-NA
+		D.w<- (D.1+D.2)/2#mapply(min,D.1,D.2)
+		
+		D.M<- omnibusM(D.1,D.2,D.w)
+		
+	
+	Embed.List<-Embed.Nodes(D.M,  in.sample.ind ,oos=TRUE ,
+			d=d.dim,
+			wt.equalize=FALSE,
+			separability.entries.w=FALSE,
+			assume.matched.for.oos = FALSE,
+			w.vals=w.vals.vec)	
+	J<-list()
+	for (Y.embed in Embed.List){
+		
+		test.samp.size<-nrow(Y.embed)/2
+		Dist=as.matrix(dist(Y.embed))[1:test.samp.size,(1:test.samp.size)+test.samp.size]
+		
+		J<-c(J,list(Dist))
+		
+	}
+	return(J)
+
+
+}
+
+JOFC.graph.diff<-function(G,Gp,
+		in.sample.ind,
+		d.dim,
+		w.vals.vec,
+		graph.is.directed=FALSE,
+		T.param=2){
+
+	n<-nrow(G)
+	graph.mode<- ifelse(graph.is.directed,"directed","undirected")
+	
+	Graph.1<-graph.empty(directed=graph.is.directed)
+	Graph.2<-graph.empty(directed=graph.is.directed)
+	Graph.M<-graph.empty(directed=graph.is.directed)
+	
+	D.M<-matrix(0,2*n,2*n)	
+	D.1<-diff.dist.fun(G,T.param)
+	D.2<-diff.dist.fun(Gp,T.param)
+	D.w<- (D.1+D.2)/2
+		
+	D.M<- omnibusM(D.1,D.2,D.w)
+		
+	}
+	
+
+
+
+			
+	
+	Embed.List<-Embed.Nodes(D.M,  in.sample.ind ,oos=TRUE ,
+			d=d.dim,
+			wt.equalize=FALSE,
+			separability.entries.w=FALSE,
+			assume.matched.for.oos = FALSE,
+			w.vals=w.vals.vec)	
+	J<-list()
+	for (Y.embed in Embed.List){
+		
+		test.samp.size<-nrow(Y.embed)/2
+		Dist=as.matrix(dist(Y.embed))[1:test.samp.size,(1:test.samp.size)+test.samp.size]
+		
+		J<-c(J,list(Dist))
+		
+	}
+	return(J)
+
+
+}
+
+
+
+
+
+
 jofc<-function(G,Gp,
 		in.sample.ind,
 		d.dim,
@@ -68,7 +178,7 @@ jofc<-function(G,Gp,
 		Graph.1<-graph.adjacency(G, mode=graph.mode)
 		Graph.2<-graph.adjacency(Gp,mode=graph.mode)
 		A.M<- diag(n)
-		A.M[!in.sample.ind[1:n]]<- 0 # Make sure vertices that are NOT known to be matched
+		A.M[!in.sample.ind[1:n],!in.sample.ind[1:n]]<- 0 # Make sure vertices that are NOT known to be matched
 		#are not connected
 		G.comb<-omnibusM(G,Gp,A.M)
 		Graph.M <- graph.adjacency(G.comb,
@@ -82,7 +192,7 @@ jofc<-function(G,Gp,
 		
 		diag(A.M) <- matched.cost
 		
-		A.M[!in.sample.ind[1:n]]<- 0
+		A.M[!in.sample.ind[1:n],!in.sample.ind[1:n]]<- 0
 		if (is.null(wt.matrix.1)){
 			#Given adjacency matrix, generate weighted graph
 			wt.matrix.1 <- G
@@ -236,7 +346,7 @@ jofc.diffusion.dist<-function(G,Gp,
 	}	else{
 		if (is.null(wt.matrix.1)){
 			A.M<- diag(n)
-			A.M[!in.sample.ind[1:n]]<- 0
+			A.M[!in.sample.ind[1:n],!in.sample.ind[1:n]]<- 0
 			G.comb<-omnibusM(G,Gp,A.M)
 			#compute dissimilarities in joint graph
 			D.M<-diff.dist.fun(G.comb,T.param)
