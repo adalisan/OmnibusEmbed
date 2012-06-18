@@ -49,10 +49,10 @@ jofc<-function(G,Gp,
 		use.weighted.graph=TRUE,
 		wt.matrix.1=NULL,
 		wt.matrix.2=NULL,
-		sep.graphs=TRUE # if TRUE, treat two graphs separately to compute dissimilarities
+		sep.graphs=TRUE, # if TRUE, treat two graphs separately to compute dissimilarities
 #and impute W (off-diagonalblock matrix)
 # if FALSE, join the graphs and compute dissimilarities from joint graph
-
+        matched.cost=0.01
 ){
 	
 	n<-nrow(G)
@@ -215,7 +215,8 @@ jofc.diffusion.dist<-function(G,Gp,
 		sep.graphs=TRUE ,# if TRUE, treat two graphs separately to compute dissimilarities
 #and impute W (off-diagonalblock matrix)
 # if FALSE, join the graphs and compute dissimilarities from joint graph
-	   T.param=1
+	   T.param=2,
+	   matched.cost=0.01
 ){
 	n<-nrow(G)
 	graph.mode<- ifelse(graph.is.directed,"directed","undirected")
