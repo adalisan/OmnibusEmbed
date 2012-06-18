@@ -117,7 +117,7 @@ JOFC.graph.diff<-function(G,Gp,
 		
 	D.M<- omnibusM(D.1,D.2,D.w)
 		
-	}
+	
 	
 
 
@@ -188,7 +188,7 @@ jofc<-function(G,Gp,
 		# If creating  a weighted graph 
 		# make the weight matrix from adjacency matrix. Those with same-condition edges have weights of wt.connect/10
 		#those  with no edges have weights of wt.connect. Those with "matched edges has weights of matched.cost
-		A.M<- matrix(500,n,n)
+		A.M<- matrix(1E8,n,n)
 		
 		diag(A.M) <- matched.cost
 		
