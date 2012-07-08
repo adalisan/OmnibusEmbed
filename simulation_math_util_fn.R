@@ -846,11 +846,11 @@ w.val.to.W.mat<-function(w,n,sep.err.w,wt.equalize){
 	commens.entries <- rbind(commens.entries,cbind(num.pt.pairs+1:num.pt.pairs,1:num.pt.pairs))
 	correction.factor <- 1
 	if (sep.err.w==FALSE){
-		Weight.Mat[1:num.pt.pairs,][,num.pt.pairs+(1:num.pt.pairs)]<- 0
-		Weight.Mat[num.pt.pairs+(1:num.pt.pairs),][,(1:num.pt.pairs)]<- 0
+		Weight.Mat[1:num.pt.pairs,num.pt.pairs+(1:num.pt.pairs)]<- 0
+		Weight.Mat[num.pt.pairs+(1:num.pt.pairs),(1:num.pt.pairs)]<- 0
 		correction.factor<-(1/2)*(n-1)
-	}
-	else {correction.factor<-(n-1)
+	}	else {
+    correction.factor<-(n-1)
 	}
 	if (wt.equalize==FALSE)
 		correction.factor <- 1
@@ -980,6 +980,166 @@ matched_rnorm_old_form<- function(n, p,  q, c, r, alpha,sigma.alpha) {
 	}
 }
 
+
+# Leave one row/column out from each dissimilarity matrix
+# compute test statistic for matching.
+#
+jofc.simple.leaveoneout<-function(D1,D2,D.2.all,in.sample.ind,w.vals=0.95){
+	
+	D.oos.1 <-D.1.all[!in.sample.ind,!in.sample.ind]
+	D.oos.2 <-D.2.all[!in.sample.ind,!in.sample.ind]
+	
+	Wchoice="NA+diag(0)"
+	separability.entries.w <- FALSE
+	wt.equalize=FALSE
+	
+	w.max.index<-length(w.vals)
+	assume.matched.for.oos<-FALSE
+	oos.use.imputed<-FALSE
+	bwOOS<-FALSE
+	
+	
+	# Impute "between-condition" dissimilarities from different objects  
+	if (Wchoice == "avg") {
+		L <- (D1 + D2)/2
+	} else if (Wchoice == "sqrt") {
+		L <- sqrt((D1^2 + D2^2)/2)
+	} else if (Wchoice == "NA+diag(0)") {
+		L <- matrix(NA,n,n)
+		diag(L)<- 0
+	}
+	
+	
+	
+	
+	#In sample embedding
+	# Form omnibus dissimilarity matrix
+	M <- omnibusM(D1, D2, L)
+	
+	init.conf<-pom.config
+	
+	if (verbose) print("M and init.conf")
+	if (verbose) print(str(M))
+	if (verbose) print(str(init.conf))
+	# Embed in-sample using different weight matrices (differentw values)
+	X.embeds<-JOFC.Insample.Embed(M,d,w.vals,separability.entries.w,init.conf=init.conf,wt.equalize=wt.equalize)
+	
+	
+	
+	#
+	# OOS Dissimilarity matrices
+	#
+	
+	
+	
+	#Imputing dissimilarity  entries for OOS
+	if (Wchoice == "avg") {
+		L.tilde.null <- (D.oos.1 + D.oos.2.null)/2
+		L.tilde.alt  <- (D.oos.1 + D.oos.2.alt)/2
+	} else if (Wchoice == "sqrt") {
+		L.tilde.null <- sqrt((D.oos.1^2 + D.oos.2.null^2)/2)
+		L.tilde.alt  <- sqrt((D.oos.1^2 + D.oos.2.alt^2)/2)
+		
+	} else if (Wchoice == "NA+diag(0)") {
+		L.tilde.null <- matrix(NA,m,m)
+		L.tilde.alt <- matrix(NA,m,m)
+		diag(L.tilde.null)<- 0
+		diag(L.tilde.alt)<- 0
+	}
+	#Form OOS omnibus matrices
+	M.oos.0 <- omnibusM(D.oos.1,D.oos.2.null, L.tilde.null)
+	M.oos.A <- omnibusM(D.oos.1,D.oos.2.alt,  L.tilde.alt)
+	
+	
+	
+	for (l in 1:w.max.index){
+		if (verbose) print("OOS embedding for JOFC for w= \n")
+		if (verbose) print(w.vals[l])
+		
+		w.val.l <- w.vals[l]
+		X <- X.embeds[[l]]
+		
+		
+		oos.obs.flag<- c(rep(1,2*n),rep(0,2*m))
+		
+		#Compute Weight matrix corresponding in-sample  entries
+		oos.Weight.mat.1<-w.val.to.W.mat(w.val.l,(2*n),separability.entries.w,wt.equalize)
+		
+		#Compute Weight matrix corresponding OOS  entries
+		oos.Weight.mat.2<-w.val.to.W.mat(w.val.l,(2*m),separability.entries.w,wt.equalize)
+		
+		# If assume.matched.for.oos is true, we assume OOS dissimilarities are matched(in reality,
+		# they are matched for the matched pairs, but unmatched for the unmatched pairs)
+		# If assume.matched.for.oos is true, we ignore the dissimilarities between matched/unmatched 
+		# pairs
+		if (!assume.matched.for.oos){
+			oos.Weight.mat.2[1:m,m+(1:m)]<-0
+			oos.Weight.mat.2[m+(1:m),(1:m)]<-0
+		}
+		# if (oos.use.imputed is true) we treat the dissimiilarities between  in-sample and out-of-sample measurements
+		# from different conditions like fidelity terms
+		# otherwise they are ignored
+		if (oos.use.imputed){
+			oos.Weight.mat.w <- matrix(1-w.val.l,2*n,2*m)
+		} else{
+			oos.Weight.mat.w <- rbind(cbind(matrix(1-w.val.l,n,m), matrix(0,n,m) ),
+					cbind(matrix(0,n,m),matrix(1-w.val.l,n,m))
+			)
+		}
+		oos.Weight.mat<-omnibusM(oos.Weight.mat.1,oos.Weight.mat.2,oos.Weight.mat.w)
+		# Since we are going to oos-embedding, set the weights  of in-sample embedding of stress
+		# We are using previous in-sample embeddings, anyway
+		oos.Weight.mat[1:(2*n),1:(2*n)]<-0
+		if (verbose) print("dim(M.oos.0)")
+		if (verbose) print(dim(M.oos.0))
+		if (verbose) print("dim(M.oos.A)")
+		if (verbose) print(dim(M.oos.A))
+		if (verbose) print("dim(oos.Weight.mat)")
+		if (verbose) print(dim(oos.Weight.mat))
+		if (verbose) print("dim(X)")
+		if (verbose) print(dim(X))
+		#if (verbose) {print("oos.obs.flag")
+		
+		
+		
+		omnibus.oos.D.0 <- omnibusM(M,M.oos.0,ideal.omnibus.0[1:(2*n),(2*n)+(1:(2*m))])
+		omnibus.oos.D.A <- omnibusM(M,M.oos.A, ideal.omnibus.A[1:(2*n),(2*n)+(1:(2*m))])
+		oos.Weight.mat[is.na(omnibus.oos.D.0)]<-0
+		omnibus.oos.D.0[is.na(omnibus.oos.D.0)]<-1
+		omnibus.oos.D.A[is.na(omnibus.oos.D.A)]<-1
+		if (verbose) print("JOFC null omnibus OOS embedding \n")
+#if (profile.mode)			Rprof("profile-oosIM.out",append=TRUE)
+		Y.0t<-oosIM(D=omnibus.oos.D.0,
+				X=X,
+				init     = "random",
+				verbose  = FALSE,
+				itmax    = 1000,
+				eps      = 1e-8,
+				W        = oos.Weight.mat,
+				isWithin = oos.obs.flag,
+				bwOos    = bwOOS)
+		Y.At<-oosIM(D=omnibus.oos.D.A,
+				X=X,
+				init     = "random",
+				verbose  = FALSE,
+				itmax    = 1000,
+				eps      = 1e-8,
+				W        = oos.Weight.mat,
+				isWithin = oos.obs.flag,
+				bwOos    = bwOOS)
+#if (profile.mode)				Rprof(NULL)
+		Y1t<-Y.0t[1:m,]
+		Y2t<-Y.0t[m+(1:m),]
+		Y1t.A<-Y.At[1:m,]
+		Y2At<-Y.At[m+(1:m),]
+		
+		T0[l,] <- rowSums((Y1t - Y2t)^2)
+		TA[l,] <- rowSums((Y1t.A - Y2At)^2)
+	}
+
+return(list(T0=T0,TA=TA))
+
+}
 
 
 
