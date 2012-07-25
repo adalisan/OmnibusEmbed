@@ -411,6 +411,8 @@ Embed.Nodes <-function(D.omnibus,
   
   D.in <- D.omnibus[in.sample.ind,in.sample.ind]
   embed.order<-sample.int(all.m,all.m,replace=FALSE)
+  embed.order.2<-sample.int(all.m,all.m,replace=FALSE)
+  embed.order<- c(embed.order,all.m+embed.order.2)
   num.embed.iter = ceiling(all.m/oos.embed.n.at.a.time)
   insample.indices<- which(in.sample.ind)
   
@@ -443,14 +445,18 @@ Embed.Nodes <-function(D.omnibus,
         if (embed.iter==num.embed.iter) test.m=all.m-(num.embed.iter-1)*oos.embed.n.at.a.time
         embed.ind<-embed.order[(oos.embed.n.at.a.time*(embed.iter-1))+(1:test.m)]
         embed.ind<-sort(embed.ind)
+        embed.ind.2<-embed.order[all.m+(oos.embed.n.at.a.time*(embed.iter-1))+(1:test.m)]
+        embed.ind.2<-sort(embed.ind.2)
         embed.order[(oos.embed.n.at.a.time*(embed.iter-1))+(1:test.m)]<-embed.ind
+        embed.order[all.m+(oos.embed.n.at.a.time*(embed.iter-1))+(1:test.m)]<-embed.ind.2
+        
         print("test.m and n")
         print(test.m)
         print(n)
         
         all.oos.indices<- which(!in.sample.ind)
         
-        oos.sample.indices<-all.oos.indices[c(embed.ind,all.m+embed.ind)] 
+        oos.sample.indices<-all.oos.indices[c(embed.ind,embed.ind.2)] 
         
         omnibus.oos.D.0 <- rbind(
           cbind(D.in,D.omnibus[insample.indices,oos.sample.indices]),
