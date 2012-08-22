@@ -22,7 +22,7 @@ smacofM <- function(D,
     distW <- as.dist(W)
     distD <- as.dist(D)
     if ((sum(is.null(distW))>0) |(sum(is.na(distW))>0)) {
-   stop("invalid distW: strees can't be computed")}
+   stop("invalid distW: stress can't be computed")}
     if ((sum(is.null(distD))>0) |(sum(is.na(distD))>0) ) {
    stop("invalid distD: strees can't be computed")}
     require(MASS)
