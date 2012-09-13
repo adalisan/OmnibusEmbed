@@ -37,7 +37,7 @@ perturbG<-function(G,q){
   
 }
 
-JOFC.graph.custom.dist<-function(G,Gp,
+JOFC.graph.custom.dist <- function(G,Gp,
                                  in.sample.ind,
                                  d.dim,
                                  w.vals.vec,
@@ -99,7 +99,8 @@ JOFC.graph.custom.dist<-function(G,Gp,
   diag(D.w)<-0
   
   D.M<- omnibusM(D.1,D.2,D.w)
-  
+  #num_v_to_embed_at_a_time = min(floor(1.2*sum(in.sample.ind)),sum(!in.sample.ind)
+  num_v_to_embed_at_a_time = sum(!in.sample.ind)
   
   Embed.List<-Embed.Nodes(D.M,  in.sample.ind ,oos=TRUE ,
                           d=d.dim,
@@ -107,7 +108,7 @@ JOFC.graph.custom.dist<-function(G,Gp,
                           separability.entries.w=FALSE,
                           assume.matched.for.oos = FALSE,
                           w.vals=w.vals.vec,
-                          oos.embed.n.at.a.time=min(floor(1.2*sum(in.sample.ind)),sum(!in.sample.ind))
+                          oos.embed.n.at.a.time=num_v_to_embed_at_a_time
                           )	
   J<-list()
   for (Y.embed in Embed.List){
@@ -398,8 +399,8 @@ Embed.Nodes <-function(D.omnibus,
                        wt.equalize=FALSE,
                        separability.entries.w=FALSE,
                        assume.matched.for.oos = FALSE ,w.vals=NULL,
-                       oos.embed.n.at.a.time=sum(!in.sample.ind)){
-  #
+                       oos.embed.n.at.a.time = sum(!in.sample.ind)){
+  
   
   Y.embeds<-list()
   oos.use.imputed<- FALSE
@@ -410,9 +411,14 @@ Embed.Nodes <-function(D.omnibus,
   #in.sample.ind<-which(in.sample.ind)
   
   D.in <- D.omnibus[in.sample.ind,in.sample.ind]
-  embed.order<-sample.int(all.m,all.m,replace=FALSE)
-  embed.order.2<-sample.int(all.m,all.m,replace=FALSE)
-  embed.order<- c(embed.order,all.m+embed.order.2)
+  
+  # embedding order for oos vertices
+  
+  embed.order   <- sample.int(all.m,all.m,replace=FALSE)
+  embed.order.2 <- sample.int(all.m,all.m,replace=FALSE)
+  embed.order   <- c(embed.order,all.m+embed.order.2)
+  
+  #number  of groups that are  embedded at the same time
   num.embed.iter = ceiling(all.m/oos.embed.n.at.a.time)
   insample.indices<- which(in.sample.ind)
   
@@ -422,9 +428,6 @@ Embed.Nodes <-function(D.omnibus,
     
     
     init.conf=NULL
-    #if (sum(is.na(D.in))==0) {		
-    #		init.conf<-cmdscale(d=D.in,k=d)
-    #	}	
     
     
     X.embeds<-JOFC.Insample.Embed(D.in,d,w.vals,separability.entries.w,init.conf=init.conf,
@@ -441,7 +444,8 @@ Embed.Nodes <-function(D.omnibus,
       for (embed.iter in 1:num.embed.iter){
         sink()
         sink("Embedding.debug.txt")
-        test.m<-oos.embed.n.at.a.time 
+        #embed the next test.m (oos) vertices
+        test.m <- oos.embed.n.at.a.time 
         if (embed.iter==num.embed.iter) test.m=all.m-(num.embed.iter-1)*oos.embed.n.at.a.time
         embed.ind<-embed.order[(oos.embed.n.at.a.time*(embed.iter-1))+(1:test.m)]
         embed.ind<-sort(embed.ind)
@@ -455,7 +459,7 @@ Embed.Nodes <-function(D.omnibus,
         print(n)
         
         all.oos.indices<- which(!in.sample.ind)
-        
+         
         oos.sample.indices<-all.oos.indices[c(embed.ind,embed.ind.2)] 
         
         omnibus.oos.D.0 <- rbind(
@@ -472,20 +476,14 @@ Embed.Nodes <-function(D.omnibus,
         # We are using previous in-sample embeddings, anyway
         oos.Weight.mat.1<-matrix(0,2*n,2*n)
         
-        
-        
-        
-        #Compute Weight matrix corresponding OOS  entries
-        oos.Weight.mat.2<-w.val.to.W.mat(w.val.l,(2*test.m),separability.entries.w,wt.equalize)
-        
+    
         # If assume.matched.for.oos is true, we assume OOS dissimilarities are matched(in reality,
         # they are matched for the matched pairs, but unmatched for the unmatched pairs)
         # If assume.matched.for.oos is true, we ignore the dissimilarities between matched/unmatched 
         # pairs
-        if (!assume.matched.for.oos){
-          oos.Weight.mat.2[1:test.m,test.m+(1:test.m)]<-0
-          oos.Weight.mat.2[test.m+(1:test.m),(1:test.m)]<-0
-        }
+       
+          oos.Weight.mat.2<- matrix(0,2*test.m,2*test.m)
+          
         
         
         # if (oos.use.imputed is true) we treat the dissimiilarities between  in-sample and out-of-sample measurements
@@ -515,8 +513,8 @@ Embed.Nodes <-function(D.omnibus,
         #is formed of  weights for in.sample indices in the upper left,
         #weight for oos in the upper right 
         # ALWAYS independent of  isWithin
-        Y.0.embed<-oosIM(D=omnibus.oos.D.0,
-                                        X=X,
+        Y.0.embed<-oosIM(D = omnibus.oos.D.0,
+                                        X = X,
                                         init     = "random",
                                         verbose  = FALSE,
                                         itmax    = 1000,
@@ -540,9 +538,7 @@ Embed.Nodes <-function(D.omnibus,
 }
 
 solveMarriage<- function(Dist){
-  matches<-pairmatch(Dist)
-  
-  
+  matches<-pairmatch(Dist)    
 }
 
 cmds <- function (D.1,D.2,in.sample.ind,d.dim,oos) {
