@@ -524,22 +524,22 @@ present.many<-function(M,corr.list,in.sample.ind.1,in.sample.ind.2){
 }
 
 
-ER = function(n,p)
+ER   <-   function(n,p)
 {
-	A = matrix( rbinom(n^2,1,p) , ncol=n,byrow=T )
-	A=A*upper.tri(A)
-	A=A+t(A)
+  A   <-   matrix( rbinom(n^2,1,p) , ncol  =  n,byrow  =  T )
+  A  <-  A*upper.tri(A)
+  A  <-  A+t(A)
 	return(A)
 }
 
-bitflip = function(G,q10,q01,binary=T,symmetric=T,hollow=T)
+bitflip   <-   function(G,q10,q01,binary  =  T,symmetric = T,hollow  =  T)
 # takes graph (adjacency matrix) G and flips 1s to 0s with prob q10 and flips 0s to 1s with prob q01
 # assumes binary=T,symmetric=T,hollow=T
 {
-	n=dim(G)[1]
+  n  <-  dim(G)[1]
 	for(u in 1:(n-1))
 		for(v in (u+1):n)
-			G[u,v]=G[v,u]=ifelse(G[u,v],1-rbinom(1,1,q10),rbinom(1,1,q01))
+      G[u,v]  <-  G[v,u]  <-  ifelse(G[u,v],1-rbinom(1,1,q10),rbinom(1,1,q01))
 	return(G)
 }
 adj.Mat.2.P<-function(A){
@@ -551,11 +551,25 @@ diff.dist<-function(P){
 }
 
 
-diff.dist.fun<-function(A,T.diff){
-	P<-transition.matrix(A,dissimilarity=FALSE)
+diff.dist.fun <-  function(A,T.diff,dissimilarity=FALSE){
+  P <-  transition.matrix(A,dissimilarity  =  dissimilarity)
 	D<-diffusion.distance(P, T.diff, directed = FALSE)
 	D
 }
 
+C_dice_weighted <- function(W){
+  n<-nrow(W)
+  D<- matrix(0,n,n)
+  for (i in 1:n) {
+    for (j in 1:n) {
+      sym_neigh_diff = xor(W[i,]>0 ,W[j,]>0)
+      r_ij= sum((W[i,]+W[j,])*sym_neigh_diff)
+      a_ij <- sum((W[i,]+W[j,])*(W[i,]>0)*(W[j,0]>0))
+      D[i,j] <- (r_ij+2*(W[i,j]==0))/(r_ij+a_ij+2)
+    }
+    
+  }
+	return(D)
+}
 
 
