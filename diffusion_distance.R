@@ -6,6 +6,9 @@ if(dissimilarity == TRUE)
   
 S <- apply(W,1,sum)
 P <- W/S
+
+P[is.nan(P)]<-0
+P[is.na(P)]<-0
 return(P)
 }
 

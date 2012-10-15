@@ -1,12 +1,12 @@
-simulate.generate.test.model.plot<-function(model,params,run.parallel.sf){
+simulate.generate.test.model.plot <- function(model,params,run.parallel.sf){
 	wstar.List<-c()
 	wstar.estim<-0
-	sim.result<-with(params,{
+	sim.result <- with(params,{
 		#		if ((model=="MVN") && run.parallel)              call.func<-gaussian_simulation_jofc_tradeoff_par
 				if ((model=="MVN") && !run.parallel.sf)          call.func<-gaussian_simulation_jofc_tradeoff
 			#	if ((model=="Dirichlet") && run.parallel)        call.func<-dirichlet_simulation_jofc_tradeoff_par
 				if ((model=="Dirichlet") && !run.parallel.sf)    call.func<-dirichlet_simulation_jofc_tradeoff
-        if ((model=="MVN") && run.parallel.sf)           call.func<-gaussian_simulation_jofc_tradeoff_sf
+        if ((model=="MVN")       && run.parallel.sf)           call.func<-gaussian_simulation_jofc_tradeoff_sf
         if ((model=="Dirichlet") && run.parallel.sf)     call.func<-dirichlet_simulation_jofc_tradeoff_sf
 				sim.res<-list()
 				print("c")

@@ -37,7 +37,7 @@ smacofM <- function(D,
    if ((sum(is.null(X))>0) |(sum(is.na(X))>0)| (sum(is.infinite(X))>0)| (ncol(X)==0)) {
     X <- mvrnorm(n, mu = rep(0,ndim), Sigma = max(D,na.rm=TRUE)*diag(ndim))
        X <- matrix(X, nrow=n, ncol=ndim)
-     sink("debug.X.n.txt")
+    if (debug.mode)  {sink("debug.X.n.txt")
     print(D)
    print(ndim)
     print(X)
@@ -45,13 +45,15 @@ smacofM <- function(D,
 
         sink()
   }
+  }
+  if (debug.mode)  {
  sink("debug.X.txt")
    print(ndim)
     print(X)
     print(str(X))
 
         sink()
-
+  }
     rownames(X) <- NULL
     V <- -W
     diag(V) <- rowSums(W)

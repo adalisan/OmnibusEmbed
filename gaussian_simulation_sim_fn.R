@@ -237,11 +237,11 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 	seeds<-rep(list(),nmc)
 	par.mc.result<- foreach(mc =1:nmc,.packages=c("MASS","MCMCpack","smacof") ) %dopar% { #,.export=c("power.comparison.test")
 		
-		source("./src/simulation_math_util_fn.R")
+		source("./lib/simulation_math_util_fn.R")
 		
-		source("./src/oosMDS.R")
-		source("./src/smacofM.R")
-		source("./src/oosIM.R")
+		source("./lib/oosMDS.R")
+		source("./lib/smacofM.R")
+		source("./lib/oosIM.R")
 		sink(file=file.path('logs',paste("debug-G-",mc,".txt",collapse="")))
 		set.seed(mc)
 		#if(mc<=4) {for(i in 1:mc) print(mvrnorm(4,mu=rep(0,4),Sigma=diag(4)))}
@@ -438,8 +438,7 @@ gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
 			"oos",
 			"alpha",
 			"n",
-			"m",
-			
+			"m",			
 			"old.gauss.model.param",
 			"separability.entries.w",
 			"compare.pom.cca",
@@ -564,7 +563,7 @@ run.mc.rep.with.seed <-function(seed){
 	
 	sink(file=file.path('logs',paste("debug-G-mc-rep-",seed,".txt",collapse="")))
 	print("Running run.mc.replicate function")
-	tmp<- run.mc.replicate("gaussian",p, r, q, c.val,  ##try(
+	tmp <- run.mc.replicate("gaussian",p, r, q, c.val,  ##try(
 			d           = d,
 			pprime1=pprime1,   pprime2=pprime2,
 			Wchoice     = Wchoice, 
