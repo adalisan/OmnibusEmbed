@@ -303,6 +303,133 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 	
 }
 
+run.bootstrapped.JOFC<-function(model,p, r, q, c.val,
+		d           = p-1,
+		pprime1     = ifelse(model=="gaussian",p+q,p+q+2),   # cca arguments , signal+noise dimension
+		pprime2     = ifelse(model=="gaussian",p+q,p+q+2),   # cca arguments, signal+noise dimension
+		Wchoice     = "avg", #How to impute L
+		pre.scaling = TRUE,  #Make the measurement spaces have the same scale
+		oos         = TRUE,  #embed test observations by Out-of-sampling  ?
+		alpha       = NULL,  
+		n = 100, m = 100,    #Number of training and test observations
+		
+		old.gauss.model.param=FALSE,
+		separability.entries.w,  
+		compare.pom.cca=TRUE,  # Run PoM and CCA to compare with JOFC?
+		oos.use.imputed,
+		level.mcnemar=0.01,  #At what alpha, should unweighted(w=0.5) and optimal w^* be compared
+		def.w=0.5,           #The null hypothesis is that power(def.w) >= power(rival.w) (by default ,def.w is the w for the unweighted case which equals 0.5)
+		rival.w=NULL,        
+		proc.dilation=FALSE, #when investigating convergence of JOFC to PoM, should Procrustes analysis of configurations include the dilation component?
+		assume.matched.for.oos, 
+		w.vals,				  #w values to use for JOFC
+		wt.equalize,		
+		verbose=FALSE) {
+	
+	w.max.index <- length(w.vals)	
+	size <- seq(0, 1, 0.01)
+	len <- length(size)
+	
+	power.w.star <- 0
+	
+	
+	power.mc= array(0,dim=c(w.max.index,len))  #power values for JOFC in this MC replicate
+	
+	
+	T0.best.w <- matrix(0,2,m)    #Test statistics for JOFC (comparison of w=0.5 with optimal w*
+	TA.best.w <- matrix(0,2,m)
+	
+	cont.table  <- matrix(0,2,2)
+	
+	Fid.Err.Term.1 <- array(0,dim=c(w.max.index))
+	Fid.Err.Term.2 <- array(0,dim=c(w.max.index))
+	Comm.Err.Term <- array(0,dim=c(w.max.index))
+	
+	dissim.list <- generate.dissim(p = p, w.max.index = w.max.index,
+			d = d, alpha = alpha, model = model,
+			old.gauss.model.param = old.gauss.model.param, 
+			r = r, n = n, m = m, mc = mc, size = size, q = q, c.val = c.val, 
+			verbose = verbose, pre.scaling = pre.scaling)
+	
+	
+	bootstrap.parts<- resample.for.param.estim(dissim.list)
+	
+	
+	
+	JOFC.results <- with( bootstrap.parts$dissim.list.param.est, 
+			
+			run.jofc(D1, D2, D10A,D20,D2A,
+					D.oos.1,
+					D.oos.2.null ,
+					D.oos.2.alt ,					
+					ideal.omnibus.0  ,
+					ideal.omnibus.A ,
+					
+					n,m,
+					d,
+					model,oos,Wchoice,separability.entries.w,wt.equalize,
+					assume.matched.for.oos,oos.use.imputed,
+					pom.config=pom.config,
+					w.vals=w.vals,
+					size,
+					verbose) 
+	)
+	
+	best.w.est <- find.best.w.for.power(JOFC.results)
+	
+	
+	JOFC.results.test <- with( bootstrap.parts$dissim.list.test, 
+			
+			run.jofc(D1, D2, D10A,D20,D2A,
+					D.oos.1,
+					D.oos.2.null ,
+					D.oos.2.alt ,					
+					ideal.omnibus.0  ,
+					ideal.omnibus.A ,
+					
+					n,m,
+					d,
+					model,oos,Wchoice,separability.entries.w,wt.equalize,
+					assume.matched.for.oos,oos.use.imputed,
+					pom.config=pom.config,
+					w.vals= best.w.est,  #Use estimate from bootstrapping
+					size,
+					verbose) 
+	)
+	
+	
+	T0<- JOFC.results.test$T0
+	TA<- JOFC.results.test$TA
+	
+	
+	
+	power.mc[l, ] <- get_power(T0, TA, size)
+	list(power.mc=power.mc, 	optim.power=optim.power,best.w =rival.w )
+	
+}
+
+
+find.best.w.for.power <- function(JOFC.res,w.vals.vec) {
+	#w
+	w.val.len <- length(w.vals.vec)  
+	for (i in 1:w.val.len){
+		beta.w<-sim.res$power[i,,2]
+		avg.power.w[i]<-mean(beta.w)		
+	}
+	max.w <- which.max((JOFC.res$avg.power.w))
+	best.w.value <- w.vals.vec [max.w]
+	if (verbose) print("Estimate of wstar for average power curve")
+	if (verbose)  print(best.w.value)
+	#sink("debug-wstar.txt")
+	#print(sim.res$power[,,6])
+	
+	#Which w value was the best w for the highest number of mc replicates
+	#Note that multiple w.values might have the best power
+	sim.res$wstar.idx.estim.mc<- apply(JOFC.res$power[,,6],2,function(x) which(x==max(x)))
+	
+	
+}
+
 run.pom <- function(D1, D2, D10A,D20,D2A,
 		p,q,d,c.val,
 		n,m,
@@ -556,6 +683,7 @@ run.jofc <- function(D1, D2, D10A,D20,D2A,
 		w.vals,
 		size,
 		verbose=FALSE)   {
+	
 	w.max.index <- length(w.vals)
 	T0<-matrix(0,w.max.index,m)
 	TA<-matrix(0,w.max.index,m)
@@ -730,23 +858,17 @@ run.jofc <- function(D1, D2, D10A,D20,D2A,
 			Y2At<-Y.At[m+(1:m),]
 			
 			
-			
-			
 			T0[l,] <- rowSums((Y1t - Y2t)^2)
 			TA[l,] <- rowSums((Y1t.A - Y2At)^2)
-		}
-		
-		
-		
-		
+		}		
 	}
-	
 	
 	return(list(T0=T0,TA=TA,
 					Fid.Err.Term.1=Fid.Err.Term.1 ,		Fid.Err.Term.2=Fid.Err.Term.2,  Comm.Err.Term=Comm.Err.Term  ,  	  		
 					Fid.Err.Sum.Term.1 = Fid.Err.Sum.Term.1 ,		Fid.Err.Sum.Term.2 = Fid.Err.Sum.Term.2 ,		Comm.Err.Sum.Term  =Comm.Err.Sum.Term  , 
 					FC.ratio = FC.ratio ,		FC.ratio.2 =FC.ratio.2 ,		FC.ratio.3 = FC.ratio.3
-			))
+			)
+	)
 	
 }
 
@@ -1261,10 +1383,10 @@ omnibusM <- function(D1, D2, W)
 
 omnibusM.inoos <- function(D1, D2, W)
 {
-  D1 <- as.matrix(D1)
-  D2 <- as.matrix(D2)
-  W <- as.matrix(W)
-  rbind(cbind(D1, W), cbind(W, D2))
+	D1 <- as.matrix(D1)
+	D2 <- as.matrix(D2)
+	W <- as.matrix(W)
+	rbind(cbind(D1, W), cbind(W, D2))
 }
 
 plot.MC.evalues.with.CI<-function(evalues.mc,plot.title,plot.col,conf.int=TRUE,add=FALSE){
