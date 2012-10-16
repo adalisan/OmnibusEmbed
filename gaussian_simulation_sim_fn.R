@@ -22,6 +22,7 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 		w.vals,
 		wt.equalize,
 		verbose,
+		cca.reg=FALSE,
 		power.comparison.test=TRUE) {
 	## p: draw observations (signal) on Delta^p \in R^{p+1}
 	## r: determine the matchedness between matched pairs --
@@ -58,7 +59,7 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 	size <- seq(0, 1, 0.01)
 	len <- length(size)
 	power <- array(0,dim=c(w.max.index,nmc,len))
-	power.cmp<-list(pom= array(0,dim=c(nmc,len)), cca= array(0,dim=c(nmc,len)) )
+	power.cmp<-list(pom= array(0,dim=c(nmc,len)), cca= array(0,dim=c(nmc,len)), reg.cca=array(0,dim=c(nmc,len)))
 	config.dist<- array(0,dim=c(nmc,w.max.index,3))
 	
 	agg.cont.table <- matrix(0,2,2)
@@ -95,6 +96,7 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 						w.vals=w.vals,
 						wt.equalize=wt.equalize,
 						verbose=verbose,
+						cca.reg=cca.reg,
 						power.comparison.test=power.comparison.test))
 		if (inherits(mc.run,"try-error")){
 			print(paste("error in iter",mc,collapse="")	)
@@ -191,6 +193,7 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 		assume.matched.for.oos,
 		w.vals,
 		wt.equalize,
+		cca.reg=FALSE,
 		verbose=FALSE,
 		power.comparison.test=TRUE)  {
 	## p: draw observations (signal) on Delta^p \in R^{p+1}
@@ -218,7 +221,7 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 	size <- seq(0, 1, 0.01)
 	len <- length(size)
 	power <- array(0,dim=c(w.max.index,nmc,len))
-	power.cmp<-list(pom= array(0,dim=c(nmc,len)), cca= array(0,dim=c(nmc,len)) )
+	power.cmp<-list(pom= array(0,dim=c(nmc,len)), cca= array(0,dim=c(nmc,len)) ,reg.cca=array(0,dim=c(nmc,len)))
 	optim.power <- array(0,dim=c(nmc,len))
 	agg.cont.table <- matrix(0,2,2)
 	empty.cont.tab<- list(matrix(0,2,2))
@@ -273,6 +276,7 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 				w.vals=w.vals,
 				wt.equalize=wt.equalize,
 				verbose=verbose,
+				cca.reg=cca.reg,
 				power.comparison.test=power.comparison.test) 
 		#)
 		if (verbose) sink(file=file.path('logs',paste("traceback-debug-G-",mc,".txt",collapse="")))
@@ -379,6 +383,7 @@ gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
 		w.vals,
 		wt.equalize,
 		power.comparison.test,
+		cca.reg=FALSE,
 		verbose=FALSE) {
 	## p: draw observations (signal) on Delta^p \in R^{p+1}
 	## r: determine the matchedness between matched pairs --
@@ -405,7 +410,7 @@ gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
 	size <- seq(0, 1, 0.01)
 	len <- length(size)
 	power <- array(0,dim=c(w.max.index,nmc,len))
-	power.cmp<-list(pom= array(0,dim=c(nmc,len)), cca= array(0,dim=c(nmc,len)) )
+	power.cmp<-list(pom= array(0,dim=c(nmc,len)), cca= array(0,dim=c(nmc,len)),reg.cca= array(0,dim=c(nmc,len)) )
 	optim.power <- array(0,dim=c(nmc,len))
 	agg.cont.table <- matrix(0,2,2)
 	empty.cont.tab<- list(matrix(0,2,2))
@@ -526,12 +531,13 @@ gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
 		optim.power[i,]<-mc.res.i[[12]]
 	}	
 	
-	
-	print(agg.cont.table)
+	if (verbose) print("agg.cont.table in gaussian_simulation_jofc_tradeoff_sf" )
+	if (verbose) print(agg.cont.table)
 	
 	FC.terms <- list(F1=Fid.Terms.1, F2=Fid.Terms.2, C=Comm.Terms)
 	#FC.sum.terms<-
 	FC.ratios<-list(f.c=F.to.C.ratio,wtf.c=wtF.to.C.ratio,f.c.bar=F.bar.to.C.bar.ratio)
+	if (verbose) print("(FC.ratios) in gaussian_simulation_jofc_tradeoff_sf")
 	if (verbose) print(str(FC.ratios))
 	return (list(power=power,power.cmp = power.cmp, conting.table=agg.cont.table,conting.table.list=cont.tables,
 					config.dist=config.dist,min.stress=min.stress,seeds=seeds, FidComm.Terms=FC.terms,
@@ -587,7 +593,7 @@ run.mc.rep.with.seed <-function(seed){
 			power.comparison.test=power.comparison.test,
 			cca.reg=cca.reg
 	) 
-	#)
+	
 	
 	sink()
 	return(tmp)	

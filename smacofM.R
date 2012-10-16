@@ -8,7 +8,8 @@ smacofM <- function(D,
                     init    = NULL,
                     verbose = FALSE,
                     itmax   = 1000,
-                    eps     = 1e-6)
+                    eps     = 1e-6,
+					debug.mode =FALSE)
 {
 
     n <- nrow(D)

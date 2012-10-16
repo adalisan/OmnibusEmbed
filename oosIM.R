@@ -99,14 +99,15 @@ oosIM <- function(D, X,
     print("init matrices")
     if ( sum(is.na(dissWn))>0) { 
       print("dissWn")
-      print(dissWn)}
+      print(head(dissWn))}
     if ( sum(is.na(dEucBw))>0) {
       print("dEucBw")
-      print(dEucBw)}
+      print(head(dEucBw))
+  }
     
     if ( sum(is.na(dEucWn))>0) { 
       print("dEucWn")
-      print(dEucWn)}
+      print(head(dEucWn))}
     print("init matrices end ")
   }
   for (itel in 1:itmax) {
