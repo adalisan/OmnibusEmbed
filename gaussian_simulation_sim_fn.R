@@ -136,6 +136,8 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 		if (compare.pom.cca) {
 			power.cmp$cca[mc,]<-mc.run$power.cmp$cca
 			power.cmp$pom[mc,]<-mc.run$power.cmp$pom
+			
+			power.cmp$reg.cca[mc,] <-mc.run$power.cmp$regCCA
 			config.dist[mc,,1]<-mc.run$config.dist$frob.norm
 			
 			min.stress[mc,]   <-mc.run$min.stress
@@ -289,6 +291,7 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 			power.mc= array(NA,dim=c(w.max.index,len))
 			power.cca.mc = array(NA,dim=c(len))
 			power.pom.mc = array(NA,dim=c(len))
+			power.regcca.mc = array(NA,dim=c(len))
 			config.mismatch <-  list(frob.norm=array(NA,dim=c(w.max.index)))
 			min.stress.mc = array(NA,dim=c(w.max.index+1))
 			means <- array(NA , dim=c(w.max.index,2*d))			
@@ -298,7 +301,7 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 			FC.terms <- list(F1=Fid.Terms.1, F2=Fid.Terms.2, C=Comm.Terms)
 			
 			
-			tmp<- list(power.mc=power.mc,power.cmp=list(cca = power.cca.mc,pom = power.pom.mc), cont.tables=cont.table,
+			tmp<- list(power.mc=power.mc,power.cmp=list(cca = power.cca.mc,pom = power.pom.mc,regCCA= power.regcca.mc), cont.tables=cont.table,
 					config.dist= config.mismatch, min.stress=min.stress.mc,means=means,FidComm.Terms=FC.terms)
 			
 		}
@@ -321,6 +324,7 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 		if (compare.pom.cca) {
 			power.cmp$cca[i,] <-mc.res.i[[2]]$cca
 			power.cmp$pom[i,] <-mc.res.i[[2]]$pom
+			power.cmp$reg.cca[i,] <-mc.res.i[[2]]$regCCA
 		}
 		cont.tables[[i]]<-mc.res.i[[3]]
 		
@@ -493,6 +497,7 @@ gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
 		if (compare.pom.cca) {
 			power.cmp$cca[i,] <-mc.res.i[[2]]$cca
 			power.cmp$pom[i,] <-mc.res.i[[2]]$pom
+			power.cmp$reg.cca[i,] <-mc.res.i[[2]]$regCCA
 		}
 		cont.tables[[i]]<-mc.res.i[[3]]
 		

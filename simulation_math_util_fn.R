@@ -153,8 +153,8 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 			D.oos.1,
 			D.oos.2.null ,
 			D.oos.2.alt ,					
-			ideal.omnibus.0  ,
-			ideal.omnibus.A ,
+			L.in.oos.0  ,
+			L.in.oos.A ,
 			
 			n,m,
 			d,
@@ -213,8 +213,8 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 				D.oos.2.null ,
 				D.oos.2.alt ,
 				
-				ideal.omnibus.0  ,
-				ideal.omnibus.A ,
+				L.in.oos.0 ,
+				L.in.oos.A ,
 				
 				n,m,
 				d,c.val,
@@ -264,7 +264,7 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 	
 	print("end run.mc.replicate")
 	list(power.mc=power.mc,
-			power.cmp=list(cca = CCA.teststats$power,pom = PoM.teststats$power,cca.reg = regCCA.teststats$power),
+			power.cmp=list(cca = CCA.teststats$power,pom = PoM.teststats$power,regCCA = regCCA.teststats$power),
 			cont.tables=cont.table,
 			config.dist= config.mismatch, min.stress=c(min.stress.for.w.val,pom.stress),means=means,
 			FidComm.Terms=FidComm.Terms,	FidComm.Sum.Terms = FidComm.Sum.Terms,
@@ -325,17 +325,15 @@ run.bootstrapped.JOFC<-function(model,p, r, q, c.val,
 	
 	
 	bootstrap.parts<- resample.for.param.estim(dissim.list)
-	
-	
-	
+		
 	JOFC.results <- with( bootstrap.parts$dissim.list.param.est, 
 			
 			run.jofc(D1, D2, D10A,D20,D2A,
 					D.oos.1,
 					D.oos.2.null ,
 					D.oos.2.alt ,					
-					ideal.omnibus.0  ,
-					ideal.omnibus.A ,
+					L.in.oos.0  ,
+					L.in.oos.A ,
 					
 					n,m,
 					d,
@@ -356,8 +354,8 @@ run.bootstrapped.JOFC<-function(model,p, r, q, c.val,
 					D.oos.1,
 					D.oos.2.null ,
 					D.oos.2.alt ,					
-					ideal.omnibus.0  ,
-					ideal.omnibus.A ,
+					L.in.oos.0  ,
+					L.in.oos.A ,
 					
 					n,m,
 					d,
@@ -379,6 +377,54 @@ run.bootstrapped.JOFC<-function(model,p, r, q, c.val,
 	list(power.mc=power.mc, 	optim.power=dissim.list$optim.power,best.w =rival.w )
 	
 }
+
+
+resample.for.param.estim <- function(dissim.list) {
+	n <- nrow(D1)
+	total_n <- nrow(D10A)
+	m <- total_n - n
+	sample.for.param.est<-sample(1:n, size=floor(n/3))
+	sample.for.param.est.insample <-sample (sample.for.param.est,size=floor(2*n/9))
+	sample.log <- rep(F,length(sample.for.param.est))
+	sample.log[sample.for.param.est.insample]<- T
+	oos.sample.0 <- which(!sample.log)
+	shuff.sample <- sample(which(!sample.log),sum(!sample.log))
+	sample.alt <- c(sample.for.param.est.insample,shuff.sample)
+	
+	L.in.oos.0.param.est <- (D1[sample.for.param.est.insample,oos.sample.0]+
+				D2[sample.for.param.est.insample,oos.sample.0])/2 
+	L.in.oos.A.param.est  <- (D1[sample.for.param.est.insample,oos.sample.A]+
+				D2[sample.for.param.est.insample,oos.sample.A])/2 
+	data.for.param.est  <- list(D1=D1[sample.for.param.est.insample,sample.for.param.est.insample],
+			D2= D2 [sample.for.param.est.insample,sample.for.param.est.insample] ,
+			D10A= D1[sample.for.param.est,sample.for.param.est] ,
+			D20 = D2[sample.for.param.est,sample.for.param.est],
+			D2A = D2[sample.alt,sample.alt],
+			D.oos.1= D1[oos.sample.0,oos.sample.0] ,
+			D.oos.2.null = D2[oos.sample.0,oos.sample.0],
+			D.oos.2.alt=  D2[shuff.sample,shuff.sample],
+			L.in.oos.0 = L.in.oos.0.param.est,
+			L.in.oos.A = L.in.oos.A.param.est
+	)
+	
+	data.for.test  <- list(D1=D1[-sample.for.param.est,-sample.for.param.est],
+			D2= D2[-sample.for.param.est,-sample.for.param.est] ,
+			D10A= D10A[-sample.for.param.est,-sample.for.param.est] ,
+			D20 = D20[-sample.for.param.est,-sample.for.param.est],
+			D2A = D2A[-sample.for.param.est,-sample.for.param.est],
+			D.oos.1= D.oos.1 ,	D.oos.2.null = D.oos.2.null,
+			D.oos.2.alt=  D.oos.2.alt,
+			L.in.oos.0 = L.in.oos.0, L.in.oos.A = L.in.oos.A
+	)
+	
+	
+	return(list(dissim.list.param.est=data.for.param.est,
+					dissim.list.test=data.for.test)) 
+	
+	
+}
+
+
 
 
 find.best.w.for.power <- function(JOFC.res,w.vals.vec) {
@@ -644,8 +690,8 @@ run.jofc <- function(D1, D2, D10A,D20,D2A,
 		D.oos.2.null ,
 		D.oos.2.alt ,
 		
-		ideal.omnibus.0  ,
-		ideal.omnibus.A ,
+		L.in.oos.0  ,
+		L.in.oos.A ,
 		
 		n,m,
 		d,
@@ -796,8 +842,8 @@ run.jofc <- function(D1, D2, D10A,D20,D2A,
 			
 			
 			
-			omnibus.oos.D.0 <- omnibusM(M,M.oos.0,ideal.omnibus.0[1:(2*n),(2*n)+(1:(2*m))])
-			omnibus.oos.D.A <- omnibusM(M,M.oos.A, ideal.omnibus.A[1:(2*n),(2*n)+(1:(2*m))])
+			omnibus.oos.D.0 <- omnibusM(M,M.oos.0,L.in.oos.0 )
+			omnibus.oos.D.A <- omnibusM(M,M.oos.A, L.in.oos.A)
 			oos.Weight.mat[is.na(omnibus.oos.D.0)]<-0
 			omnibus.oos.D.0[is.na(omnibus.oos.D.0)]<-1
 			omnibus.oos.D.A[is.na(omnibus.oos.D.A)]<-1
@@ -937,9 +983,13 @@ generate.dissim <- function(p,  d, alpha, model, old.gauss.model.param, r, n, m,
 	ideal.omnibus.0  <- as.matrix(dist(rbind(X1,X2,Y1,Y20)))
 	ideal.omnibus.A  <- as.matrix(dist(rbind(X1,X2,Y1,Y2A)))
 	
+	L.in.oos.0 <- ideal.omnibus.0[1:(2*n),(2*n)+(1:(2*m))]
+	L.in.oos.A <- ideal.omnibus.A[1:(2*n),(2*n)+(1:(2*m))]
+	
+	
 	return(list(D1= D1,D2= D2,D10A= D10A,D20 = D20,D2A=D2A,
 					D.oos.1= D.oos.1, D.oos.2.null= D.oos.2.null,D.oos.2.alt= D.oos.2.alt,
-					ideal.omnibus.0 = ideal.omnibus.0, ideal.omnibus.A = ideal.omnibus.A,
+					L.in.oos.0 = L.in.oos.0, L.in.oos.A = L.in.oos.A,
 					optim.power=optim.power))
 	
 }
