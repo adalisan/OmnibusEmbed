@@ -46,7 +46,8 @@ graph2dissimilarity <- function (G,Gp,
                                  vert_diss_measure,
                                  T.param,
                                  num_v_to_embed_at_a_time  ,
-                                 weighted.g) {
+                                 weighted.g,
+                                 graph.is.symmetric) {
   n <-  nrow(G)
   Graph.1 <-  graph.adjacency(G, mode =  graph.mode,weighted=weighted.g)
   Graph.2 <-  graph.adjacency(Gp,mode  =  graph.mode,weighted=weighted.g)
@@ -157,7 +158,7 @@ JOFC.graph.custom.dist  <-   function(G,Gp,
                                       vert_diss_measure  =  "default",
                                       T.param  =  NULL,
                                       num_v_to_embed_at_a_time   =   sum(!in.sample.ind)/2,
-                                      graph.is.weighted=FALSE   )
+                                      graph.is.weighted=FALSE , graph.is.symmetric= FALSE  )
 {
   
   
@@ -180,7 +181,8 @@ JOFC.graph.custom.dist  <-   function(G,Gp,
                             vert_diss_measure,
                             T.param,
                             num_v_to_embed_at_a_time  ,
-                            weighted.g)
+                            weighted.g,
+                            graph.is.symmetric)
   
   
   #Given adjacency matrix, generate unweighted graph

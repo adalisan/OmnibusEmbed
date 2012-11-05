@@ -581,7 +581,8 @@ Embed.Nodes.to.Match.many <-function(D.Mats,
       if (dim(init.conf)[2]< embed.dim){
         embed.dim <- dim(init.conf)[2]
         full.seed.match<-TRUE
-        
+        X.embeds<-list(init.conf)
+        break
 		}	
     }
     
@@ -600,15 +601,22 @@ Embed.Nodes.to.Match.many <-function(D.Mats,
     )
     
     if (inherits(X.embeds, "try-error")){
+      print(paste("unable to embed at this dim: ",embed.dim))
       embed.dim <-  embed.dim - d.increment
       
       full.seed.match <- TRUE
       X.embeds <- X.embeds.pre
       
       if (length(X.embeds.pre)==0) {
-        if (!is.null(init.conf)) {X.embeds <- init.conf
+        print(paste("no previous embedding exist at this dim: ",embed.dim))
+        if (!is.null(init.conf)) {
+          print(paste("Using cmds embedding "))
+          X.embeds <- init.conf
+          embed.dim<- dim(init.conf)[2]
+          print(paste("at this dim: ",embed.dim))
+          
         } else{
-          print("Unable to embed insample points. Returning random MVN vectors")
+          print("Unable to embed insample points in any way. Returning random MVN vectors for OOS")
           Y.embeds <- list(matrix(mvrnorm(n=test.m,mu=rep(0,embed.dim,Sigma=diag(embed.dim)))))
             return(Y.embeds)
         }
@@ -623,7 +631,7 @@ Embed.Nodes.to.Match.many <-function(D.Mats,
     }
     
     
-    
+    print("dim(X.embeds[[1]])")
     print(dim(X.embeds[[1]]))
     
     pw.dist.insample <- as.matrix(dist(X.embeds[[1]]))
@@ -678,8 +686,10 @@ Embed.Nodes.to.Match.many <-function(D.Mats,
 			w.val.l <- w.vals[l]
 			X <- X.embeds[[l]]
     Y.w <- matrix(0,test.m,embed.dim)
-    
+    print("embed.dim")
     print(embed.dim)
+    print("X")
+    print(str(X))
     print(dim(X))
 			
 			#Compute Weight matrix corresponding in-sample  entries
@@ -707,7 +717,7 @@ Embed.Nodes.to.Match.many <-function(D.Mats,
 			
 			if (verbose) print("JOFC null omnibus OOS embedding \n")
 			
-			Y.0t<-oosIM(D=omnibus.oos.D.0,
+      Y.0t<- tryCatch(oosIM(D=omnibus.oos.D.0,
 					X=X,
                   init     = mds.init.method,
 					verbose  = FALSE,
@@ -715,8 +725,11 @@ Embed.Nodes.to.Match.many <-function(D.Mats,
 					eps      = 1e-8,
 					W        = oos.Weight.mat,
 					isWithin = NULL,
-					bwOos    = FALSE)
-      #
+                  bwOos    = FALSE),finally={
+                    print(dim(X))
+                    print(mds.init.method)}
+                 
+              )
       Y.w[oos.samp.i,]<-Y.0t
 			
 		}
