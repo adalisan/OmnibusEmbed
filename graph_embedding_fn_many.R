@@ -149,9 +149,17 @@ graph2dissimilarity.many <- function (G,Gp,corr.list,
     D.2 <- exp(-1*Gp/2)    
   } else if (vert_diss_measure == 'C_dice_weighted'){
     
+		if (graph.mode=="directed"){
+			
+			D.1 <- C_dice_weighted_in_out(G)
+			D.2 <- C_dice_weighted_in_out(Gp)
+			
+		}
+		else{
     D.1 <- C_dice_weighted(G)
     D.2 <- C_dice_weighted(Gp)
   }                                   
+	}                                   
   # In case dissimilarities blow up for diss. measure, put a limit on max 
   # value for diss.
   
@@ -730,6 +738,7 @@ Embed.Nodes.to.Match.many <-function(D.Mats,
                     print(mds.init.method)}
                  
               )
+			
       Y.w[oos.samp.i,]<-Y.0t
 			
 		}
@@ -851,6 +860,7 @@ present.many<-function(M,corr.list){
     F.meas.list[match.i]<-F.meas
     names(F.meas.list)[match.i] <- test.2.index
 	}
+	
 	return(list(P=precision.list,R=recall.list,F=F.meas.list))	
 }
 

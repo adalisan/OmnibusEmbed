@@ -46,8 +46,7 @@ graph2dissimilarity <- function (G,Gp,
                                  vert_diss_measure,
                                  T.param,
                                  num_v_to_embed_at_a_time  ,
-                                 weighted.g,
-                                 graph.is.symmetric) {
+		weighted.g) {
   n <-  nrow(G)
   Graph.1 <-  graph.adjacency(G, mode =  graph.mode,weighted=weighted.g)
   Graph.2 <-  graph.adjacency(Gp,mode  =  graph.mode,weighted=weighted.g)
@@ -100,9 +99,19 @@ graph2dissimilarity <- function (G,Gp,
     D.2 <- exp(-1*Gp/2)    
   } else if (vert_diss_measure == 'C_dice_weighted'){
        
+		
+		if (graph.mode=="directed"){
+			
+			D.1 <- C_dice_weighted_in_out(G)
+			D.2 <- C_dice_weighted_in_out(Gp)
+			
+		}
+		else{
+			
     D.1 <- C_dice_weighted(G)
     D.2 <- C_dice_weighted(Gp)
   }
+	}
   # In case dissimilarities blow up for diss. measure, put a limit on max 
   # value for diss.
   
@@ -158,7 +167,7 @@ JOFC.graph.custom.dist  <-   function(G,Gp,
                                       vert_diss_measure  =  "default",
                                       T.param  =  NULL,
                                       num_v_to_embed_at_a_time   =   sum(!in.sample.ind)/2,
-                                      graph.is.weighted=FALSE , graph.is.symmetric= FALSE  )
+			graph.is.weighted=FALSE  )
 {
   
   
@@ -181,8 +190,7 @@ JOFC.graph.custom.dist  <-   function(G,Gp,
                             vert_diss_measure,
                             T.param,
                             num_v_to_embed_at_a_time  ,
-                            weighted.g,
-                            graph.is.symmetric)
+				weighted.g)
   
   
   #Given adjacency matrix, generate unweighted graph
@@ -215,7 +223,7 @@ JOFC.graph.custom.dist  <-   function(G,Gp,
                              wt.equalize =  FALSE,
                              separability.entries.w  =  FALSE,
                              assume.matched.for.oos   =   FALSE,
-                                     w.vals  =  0.8,
+				w.vals  =  w.vals.vec,
                                      oos.embed.n.at.a.time   =  1,
                                      mds.init.method="gower")
   
@@ -239,6 +247,9 @@ JOFC.graph.custom.dist  <-   function(G,Gp,
 }
 
 
+	
+	
+	
 JOFC.graph <-  function(G,Gp,
                         in.sample.ind,
                         d.dim,
@@ -1180,6 +1191,37 @@ C_dice_weighted <- function(W){
   return(5*D)
 }
 
+	C_dice_weighted_in_out <- function(W){
+		n<-nrow(W)
+		diag(W)<-0
+		D.in<- matrix(0,n,n)
+		for (i in 1:n) {
+			for (j in 1:n) {			
+				r_ij= sum((W[,i]* (W[,i]>0 &  W[,j]==0)))+
+						sum((W[,j]* (W[,i]==0 &  W[,j]>0)))-W[i,j]-W[j,i]
+				a_ij <- sum((W[,i]+W[,j])*((W[,i]>0)&(W[,j]>0)))+W[i,j]+W[j,i]
+				#t <- ifelse(W[i,j]==0,1,0)
+				D.in[i,j] <- (r_ij+(W[i,j]==0)+(W[j,i]==0))/(r_ij+a_ij+2)
+			}
+			
+		}
+		D.out<- matrix(0,n,n)
+		for (i in 1:n) {
+			for (j in 1:n) {
+				
+				r_ij= sum((W[i,]* (W[i,]>0 &  W[j,]==0)))+ sum((W[j,]* (W[i,]==0 &  W[j,]>0)))-W[i,j]-W[j,i]
+				a_ij <- sum((W[i,]+W[j,])*((W[i,]>0)&(W[j,]>0)))+W[i,j]+W[j,i]
+				#t <- ifelse(W[i,j]==0,1,0)
+				D.out[i,j] <- (r_ij+(W[i,j]==0)+(W[j,i]==0))/(r_ij+a_ij+2)
+			}
+			
+		}
+		D <- (D.in+D.out)/2
+		diag(D)<-0
+		return(5*D)
+	}
+	
+	
 
 ectime<-function(W){
   n <-nrow(W)

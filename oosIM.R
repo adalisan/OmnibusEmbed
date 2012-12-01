@@ -66,7 +66,8 @@ oosIM <- function(D, X,
   if (!bwOos) {
     W[-(1:n), -(1:n)] <- 0
   }
-  
+  print("W")
+  print(str(W))
   V <- -W
   diag(V) <- colSums(W) - diag(W)
   if(debug && sum(is.na(V)>0)) print("is.na V ")

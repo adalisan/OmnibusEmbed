@@ -407,3 +407,12 @@ simulate.generate.test.model.plot <- function(model,params,run.parallel.sf){
 	sim.result$wstar<- sim.result$wstar.estim
 	return(sim.result)
 }
+
+
+
+
+
+test.bootstrapped.JOFC<- function(...){
+	return(run.bootstrapped.JOFC(...
+		))
+}
