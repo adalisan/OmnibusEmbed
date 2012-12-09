@@ -1,3 +1,4 @@
+
 oosMDS <- function(D, X, w=c(rep(1, nrow(X)), rep(0, nrow(as.matrix(D))-nrow(X))),
                    init = "gower", itmax = 100) {
   ## Args:
@@ -159,3 +160,4 @@ tau <- function(fullD, w) {
 ## Output:
 ##       Y: oos matrix of test: (N-n) x d
 ## 
+
