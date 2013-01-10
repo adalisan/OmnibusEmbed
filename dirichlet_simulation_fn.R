@@ -553,6 +553,7 @@ run.mc.rep.with.seed.d <-function(seed){
 		source(file.path("lib","smacofM.R"))
 		source(file.path("lib","oosIM.R"))
 		library(MASS)
+		library(MCMCpack)
 		print("Lib functions loaded")
 		
 		
