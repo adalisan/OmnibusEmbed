@@ -1597,7 +1597,8 @@ plot.ROC.with.CI<-function(plot.roc.points,plot.title,plot.col,conf.int = TRUE,a
   par(lty = 1)		
 }
 
-plot.graph.with.CI<-function(plot.roc.points,plot.title,plot.col,conf.int = TRUE,add = FALSE,fp.points = seq(0,1,0.01),customx.labels = NULL,customy.labels = NULL,ispowercurve = TRUE){
+plot.graph.with.CI<-function(plot.roc.points,plot.title,plot.col,conf.int = TRUE,add = FALSE,fp.points = seq(0,1,0.01),
+                             customx.labels = NULL,customy.labels = NULL,ispowercurve = TRUE,...){
   
   standardx.axis <- FALSE
   standardy.axis <- FALSE
@@ -1618,12 +1619,12 @@ plot.graph.with.CI<-function(plot.roc.points,plot.title,plot.col,conf.int = TRUE
   if (add){
     lines(x = fp.points,y =  y.points,main = plot.title,
           col = plot.col,xaxt = ifelse(standardx.axis,"s","n"),
-          yaxt = ifelse(standardy.axis,"s","n"), lwd = 2.5,xlab = "",ylab = "")
+          yaxt = ifelse(standardy.axis,"s","n"), lwd = 2.5)
     
   }
   else{
     plot(x = fp.points,y =  y.points,main = plot.title,xaxt = ifelse(standardx.axis,"s","n"),
-         yaxt = ifelse(standardy.axis,"s","n"), col = plot.col,type = 'l',lwd = 2.5,xlab = "",ylab = "")
+         yaxt = ifelse(standardy.axis,"s","n"), col = plot.col,type = 'l',lwd = 2.5,...)
   }
   
   if (!standardx.axis)
