@@ -68,6 +68,8 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 	min.stress<- array(0,dim=c(nmc,w.max.index+1))
 	optim.power.vec <- array(0,dim=c(nmc,len))
 	best.w.vals <-rep (0,nmc)
+	auc.meas<- array(0,dim=c(nmc,w.max.index))
+	
 	
 	for(mc in 1:nmc) {
 		
@@ -155,7 +157,7 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 		
 		optim.power.vec[mc,]<- mc.run$optim.power
 		best.w.vals[mc] <- mc.run$best.w
-		
+		auc.meas[mc,]<- mc.run$auc.meas
 		
 		
 		
@@ -167,7 +169,7 @@ gaussian_simulation_jofc_tradeoff <- function(p, r, q, c.val,
 	
 	return (list(power=power,power.cmp=power.cmp, conting.table=agg.cont.table,conting.table.list=cont.tables,
 					config.dist=config.dist,min.stress=min.stress,FidComm.Terms=FC.terms,
-					FC.ratios=FC.ratios,optim.power =  optim.power.vec,wstar.estim= The.mode( best.w.vals) ))
+					FC.ratios=FC.ratios,optim.power =  optim.power.vec,wstar.estim= The.mode( best.w.vals),auc.meas=auc.meas ))
 	
 	
 }
@@ -230,7 +232,7 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 	cont.tables<-rep(empty.cont.tab,nmc)
 	config.dist<- array(0,dim=c(nmc,w.max.index,3))
 	min.stress<- array(0,dim=c(nmc,w.max.index+1))
-	
+	auc.meas<- array(0,dim=c(nmc,w.max.index))
 	Fid.Terms.1<-c()
 	Fid.Terms.2<-c()
 	Comm.Terms <-c()
@@ -347,7 +349,8 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 		F.to.C.ratio <-  rbind(F.to.C.ratio,F.to.C.ratio.i)
 		wtF.to.C.ratio <- rbind(wtF.to.C.ratio,wtF.to.C.ratio.i)
 		F.bar.to.C.bar.ratio <- rbind(F.bar.to.C.bar.ratio,F.bar.to.C.bar.ratio.i)
-		optim.power[i,]<-mc.res.i[[12]]
+		optim.power[i,]<- mc.res.i[[12]]
+		auc.meas[i,]   <- mc.res.i[[13]]
 		
 		
 	}
@@ -359,7 +362,7 @@ gaussian_simulation_jofc_tradeoff_par <- function(p, r, q, c.val,
 	if (verbose) print(str(FC.ratios))
 	return (list(power=power,power.cmp = power.cmp, conting.table=agg.cont.table,conting.table.list=cont.tables,
 					config.dist=config.dist,min.stress=min.stress,seeds=seeds, FidComm.Terms=FC.terms,
-					FC.ratios=FC.ratios,optim.power=optim.power))
+					FC.ratios=FC.ratios,optim.power=optim.power,auc.meas=auc.meas ))
 }
 
 
@@ -421,7 +424,7 @@ gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
 	cont.tables<-rep(empty.cont.tab,nmc)
 	config.dist<- array(0,dim=c(nmc,w.max.index,3))
 	min.stress<- array(0,dim=c(nmc,w.max.index+1))
-	
+	auc.meas<- array(0,dim=c(nmc,w.max.index))
 	Fid.Terms.1<-c()
 	Fid.Terms.2<-c()
 	Comm.Terms <-c()
@@ -483,7 +486,7 @@ gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
 	
 	
 	# Number of elements in the par.mc.result list for each mc replicate	
-	num.value.per.mc.rep <-13
+	num.value.per.mc.rep <-14
 	#if (verbose) print("str of par.mc.result")
 	#if (verbose) print(str(par.mc.result))
 	for (i in 1:nmc){
@@ -534,6 +537,7 @@ gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
 		wtF.to.C.ratio <- rbind(wtF.to.C.ratio,wtF.to.C.ratio.i)
 		F.bar.to.C.bar.ratio <- rbind(F.bar.to.C.bar.ratio,F.bar.to.C.bar.ratio.i)
 		optim.power[i,]<-mc.res.i[[12]]
+		auc.meas[i,]<- mc.res.i[[13]]
 	}	
 	
 	if (verbose) print("agg.cont.table in gaussian_simulation_jofc_tradeoff_sf" )
@@ -546,7 +550,7 @@ gaussian_simulation_jofc_tradeoff_sf <- function(p, r, q, c.val,
 	if (verbose) print(str(FC.ratios))
 	return (list(power=power,power.cmp = power.cmp, conting.table=agg.cont.table,conting.table.list=cont.tables,
 					config.dist=config.dist,min.stress=min.stress,seeds=seeds, FidComm.Terms=FC.terms,
-					FC.ratios=FC.ratios,optim.power=optim.power))
+					FC.ratios=FC.ratios,optim.power=optim.power,auc.meas=auc.meas))
 }
 
 run.mc.rep.with.seed <-function(seed){

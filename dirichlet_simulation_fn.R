@@ -530,7 +530,7 @@ sfStop()
 		F.to.C.ratio <-  rbind(F.to.C.ratio,F.to.C.ratio.i)
 		wtF.to.C.ratio <- rbind(wtF.to.C.ratio,wtF.to.C.ratio.i)
 		F.bar.to.C.bar.ratio <- rbind(F.bar.to.C.bar.ratio,F.bar.to.C.bar.ratio.i)
-		optim.power[i,]<-mc.res.i[[12]]
+		#optim.power[i,]<-mc.res.i[[12]]
 	}	
 		
 	if (verbose) print("agg.cont.table in gaussian_simulation_jofc_tradeoff_sf" )
