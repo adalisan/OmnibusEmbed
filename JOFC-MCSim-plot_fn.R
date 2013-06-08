@@ -8,6 +8,7 @@ draw.plots<-function(sim.res,model,params,plot.w.vals,compare.pom.cca,cca.reg,co
   sim.res.pow<-sim.res$power
   #w.val.len <-length(params$w.vals)
   w.val.len <-length(plot.w.vals)
+  num.w.val<- length(params$w.vals)
   
   
   
@@ -43,16 +44,16 @@ draw.plots<-function(sim.res,model,params,plot.w.vals,compare.pom.cca,cca.reg,co
   lty.i.vec<-c()
   par(cex=1.4)
 #   par(cex.lab=1.8,cex.axis=1.8,cex.main=1.8,cex.sub=1.8)
-  for (i in 1:w.val.len){
-    if (i %in% plot.w.vals){
-      color.i <- which(plot.w.vals==i )
-      lty.i <- 1+((i-1)%%10)
+  for (color.i in 1:w.val.len){
+     i<- plot.w.vals[color.i]
+      
+      lty.i <- 1+((color.i-1)%%10)
       
       lty.i.vec <- c(lty.i.vec,lty.i)
       par(lty=lty.i)
       plot.ROC.with.CI(sim.res.pow[i,,],plot.title="",plot.col = colors.vec[color.i],
                        conf.int=FALSE,add=(color.i>1),ylim=1,linewd=linewd)
-    }
+    
   }
   
   if (compare.pom.cca) {
@@ -85,7 +86,7 @@ draw.plots<-function(sim.res,model,params,plot.w.vals,compare.pom.cca,cca.reg,co
   }
   
   legend.txt <- (params$w.vals)[plot.w.vals]
-  legend.txt.prefix <- c("w =",rep(c("    "),length(plot.w.vals)-1))
+  legend.txt.prefix <- c("w =",rep(c("   "),length(plot.w.vals)-1))
   legend.txt<- paste(legend.txt.prefix,legend.txt)
   if (compare.pom.cca)
     legend.txt <-c(legend.txt ,"pom","cca")
@@ -129,7 +130,7 @@ draw.plots<-function(sim.res,model,params,plot.w.vals,compare.pom.cca,cca.reg,co
   #
   # Power vs w plots for fixed alpha
   avg.power.w <-rep(0,length(w.val.len))
-  for (i in 1:w.val.len){
+  for (i in 1:num.w.val){
     beta.w<-sim.res$power[i,,2]
     avg.power.w[i]<-mean(beta.w)		
   }
@@ -153,19 +154,20 @@ draw.plots<-function(sim.res,model,params,plot.w.vals,compare.pom.cca,cca.reg,co
   print(sim.res$wstar.idx.estim.mc)
   #sink()
   avg.power.w.2 <-rep(0,length(w.val.len))
-  for (i in 1:w.val.len){
+  for (i in 1:num.w.val){
     beta.w<-sim.res$power[i,,6]
     avg.power.w.2[i]<-mean(beta.w)
   }
   
   avg.power.w.3 <-rep(0,length(w.val.len))
-  for (i in 1:w.val.len){
+  for (i in 1:num.w.val){
     beta.w<-sim.res$power[i,,11]
     avg.power.w.3[i]<-mean(beta.w)			
   }
   
-  x.vals<- 1:w.val.len
+  x.vals<- 1:num.w.val
   par(lwd=3)
+  par(cex.lab=1.2)
   plot(x=x.vals,y=avg.power.w,col="blue",type="l",ylim=c(0,1),log='x',xlab=expression(w),ylab=expression(beta),xaxt="n",ps=10)
   lines(x=x.vals,y=avg.power.w.2,col="red",xlog=TRUE)
   lines(x=x.vals,y=avg.power.w.3,col="green",xlog=TRUE)
