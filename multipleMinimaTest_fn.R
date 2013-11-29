@@ -3,8 +3,8 @@ require(gdata)
 require(Hmisc)
 require(rgl)
 require(animation)
-source("./lib/smacofM.R")
-source("./lib/oosIM.R")
+if (!exists("smacofM")) source("./lib/smacofM.R")
+if (!exists("oosIM")) source("./lib/oosIM.R")
 verbose <- FALSE
 run.in.linux<-FALSE
 results.dir<-"./graphs"
@@ -20,7 +20,8 @@ meshgrid <- function(a,b) {
     x=outer(b*0,a,FUN="+"),
     y=outer(b,a*0,FUN="+")
   )
-} 
+}
+
 raw.stress.at <-function(config){
   sum(as.dist(W)*((dist(config)-d.X)^2))
 }

@@ -1,4 +1,6 @@
-
+#' creates a random Graph
+#'@param s
+#'@export
 genG  <-   function(s  =  seed,n  =  1000,np  =  50,p  =  0.1,q  =  0.5) {
   x  <-   matrix(p, nrow  =  n, ncol  =  n)    ## null: (100-np)x98 matrix
   if (np>0) {
@@ -16,7 +18,10 @@ genG  <-   function(s  =  seed,n  =  1000,np  =  50,p  =  0.1,q  =  0.5) {
   return(A)
 }
 
-
+#' Returns  a randomly perturbed adjacency matrix by bitflipping a given adjacency matrix
+#'@param G the adjacency matrix to be perturbed
+#'@param q the probability of changing a 1 to 0 or 0 to 1 in the perturbation
+#'@export
 perturbG <-  function(G,q){
   n <-  nrow(G)
   Flip.mat <-  matrix(0,nrow  =  n,ncol  =  n)
@@ -37,6 +42,9 @@ perturbG <-  function(G,q){
   
 }
 
+#' Computes a given a dissimilarity between vertices in two graphs whose adjacency/weight matrices are given
+#' @param G
+#' @param Gp
 
 graph2dissimilarity <- function (G,Gp,
                                       in.sample.ind,
@@ -158,7 +166,10 @@ graph2dissimilarity <- function (G,Gp,
 }
 
 
-
+	#' Embeds two graphs using a chosen dissimilarity
+  #' @param G
+  #' @param Gp
+  #' @export
 JOFC.graph.custom.dist  <-   function(G,Gp,
                                       in.sample.ind,
                                       d.dim,
@@ -1191,6 +1202,31 @@ C_dice_weighted <- function(W){
   return(5*D)
 }
 
+C_dice_weighted_SP_hybrid <- function(W,Graph){
+  n<-nrow(W)
+  diag(W)<-0
+  D<- matrix(0,n,n)
+  for (i in 1:n) {
+    for (j in 1:n) {
+      has.common.neighbors_ij <- (W[i,]>0)&(W[j,]>0)
+      r_ij= sum((W[i,]* (W[i,]>0 &  W[j,]==0)))+ sum((W[j,]* (W[i,]==0 &  W[j,]>0)))-2*W[i,j]
+      a_ij <- sum((W[i,]+W[j,])*(has.common.neighbors_ij))+2*W[i,j]
+      #t <- ifelse(W[i,j]==0,1,0)
+      if ((sum(has.common.neighbors_ij)>0)|(W[i,j]>0))
+          D[i,j] <- (r_ij+2*(W[i,j]==0))/(r_ij+a_ij+2)
+      else{
+        sp.paths <- shortest.paths(Graph,v=i)
+        D[i,j] <- sp.paths[j]
+      }
+    }
+    
+  }
+  diag(D)<-0
+  return(5*D)
+}
+
+
+	
 	C_dice_weighted_in_out <- function(W){
 		n<-nrow(W)
 		diag(W)<-0
@@ -1220,7 +1256,70 @@ C_dice_weighted <- function(W){
 		diag(D)<-0
 		return(5*D)
 	}
+# 
+# 
+# 
+# C_dice_weighted_SP_hybrid_in_out <- function(W,Graph){
+#  
+#     DissMat<-C_dice_weighted_in_out(W)
+#     no.common.neighbors<- which(DissMat==1,arr.ind=TRUE)
+#     for (i in unique(no.common.neighbors[,1])){
+#       sp.paths <- shortest.paths(Graph, v=i)
+#       indices <- which(no.common.neighbors[,1]==i)
+#       sp.paths [indices,no.common.neighbors[,2]]
+#     }
+#     
+#     
+#     return(DissMat)
+#  
+#   
+#   
+# }
+
+
+C_dice_weighted_SP_hybrid_in_out <- function(W,Graph=NULL){
+ 
+  n<-nrow(W)
+  diag(W)<-0
+  D.in<- matrix(0,n,n)
+  has.common.neighbors <- matrix(FALSE,n,n)
+  for (i in 1:n) {
+    for (j in 1:n) {
+      has.common.neighbors_ij <- (W[,i]>0)&(W[,j]>0)
+      r_ij= sum((W[,i]* (W[,i]>0 &  W[,j]==0)))+
+        sum((W[,j]* (W[,i]==0 &  W[,j]>0)))-W[i,j]-W[j,i]
+      a_ij <- sum((W[,i]+W[,j])*(has.common.neighbors_ij))+W[i,j]+W[j,i]
+      #t <- ifelse(W[i,j]==0,1,0)
+      D.in[i,j] <- (r_ij+(W[i,j]==0)+(W[j,i]==0))/(r_ij+a_ij+2)
+      if (sum(has.common.neighbors_ij )>0) {has.common.neighbors[i,j]<-TRUE}
+    }
+    
+  }
+  D.out<- matrix(0,n,n)
+  for (i in 1:n) {
+    for (j in 1:n) {
+      has.common.neighbors_ij <- (W[i,]>0)&(W[j,]>0)
+      r_ij= sum((W[i,]* (W[i,]>0 &  W[j,]==0)))+ sum((W[j,]* (W[i,]==0 &  W[j,]>0)))-W[i,j]-W[j,i]
+      a_ij <- sum((W[i,]+W[j,])*(has.common.neighbors_ij))+W[i,j]+W[j,i]
+      #t <- ifelse(W[i,j]==0,1,0)
+      D.out[i,j] <- (r_ij+(W[i,j]==0)+(W[j,i]==0))/(r_ij+a_ij+2)
+      if (sum(has.common.neighbors_ij )>0) {has.common.neighbors[i,j]<-TRUE}
+      if ((!has.common.neighbors[i,j])&(W[i,j]==0)&(W[j,i]==0)){
+	 sp.paths <- shortest.paths(Graph,v=i)
+
+        D.in[i,j] <- D.out[i,j]<- sp.paths[j]
+      }
+      
+      
 	
+    }
+    
+  }
+
+  D <- (D.in+D.out)/2
+  diag(D)<-0
+  return(5*D)
+}
 	
 
 ectime<-function(W){
@@ -1248,7 +1347,6 @@ ectime<-function(W){
     stop()
   }
   
-  
   if (any(!is.finite(nL))) {
     print("nL invalid values")
     print(str(nL))
@@ -1270,4 +1368,9 @@ ectime<-function(W){
   ect
 }
 
-
+giant.component <- function(G){
+  cl.G<- clusters(G)
+  larg.conn.comp<-which.max(cl.G$csize)
+  G.sub <- induced.subgraph(G,vids=which(cl.G$membership==larg.conn.comp))
+  return(G.sub)
+}
