@@ -1,7 +1,5 @@
 ## functions
-
-
-
+source("./lib/oosMDS.R")
 run.mc.replicate<-function(model,p, r, q, c.val,
                            d            =  p-1,
                            pprime1      =  ifelse(model == "gaussian",p+q,p+q+2),   # cca arguments , signal+noise dimension
@@ -638,7 +636,7 @@ run.cca<-function(D1, D2, D10A,D20,D2A,
         X1t <- smacofM(D1,ndim  =  p,verbose = FALSE)
         X2t <- smacofM(D2,ndim  =  p,verbose = FALSE)
       } else{
-        X1t <- smacofM(D1,ndim  =  p+1,verbose = TRUE)		
+        X1t <- smacofM(D1,ndim  =  p+1,verbose = FALSE)		
         X2t <- smacofM(D2,ndim  =  p+1,verbose = FALSE)
       }
     } else{
@@ -667,16 +665,13 @@ run.cca<-function(D1, D2, D10A,D20,D2A,
         X1t <- smacofM(D10A, ndim = p+1,verbose = FALSE)
         D20A <-dist(rbind(X2, Y20, Y2A))
         X2t <- smacofM(D20A, ndim = p+1,verbose = FALSE)
-        
-        
       }
     } else{
       
       X1t <- smacofM(D10A, ndim = pprime1,verbose = FALSE,init = cmdscale(D10A,pprime1))
       D20A <-dist(rbind(X2, Y20, Y2A))
       X2t <- smacofM(D20A, ndim = pprime2,verbose = FALSE,init = cmdscale(D20A,pprime2))
-      
-      
+            
     }
     
     
@@ -690,13 +685,64 @@ run.cca<-function(D1, D2, D10A,D20,D2A,
     Y20t <- (X2t[(n+1):(n+m), ] %*% cca$ycoef)[, 1:d]
     Y2At <- (X2t[(n+m+1):(n+2*m), ] %*% cca$ycoef)[, 1:d]
   }
+  if (m==1){
+  T0.cca <- sum((Y1t - Y20t)^2)
+  TA.cca <- sum((Y1t - Y2At)^2)
+  } else{
+  
   T0.cca <- rowSums((Y1t - Y20t)^2)
   TA.cca <- rowSums((Y1t - Y2At)^2)
+  }
   power.cca.mc <- get_power(T0.cca, TA.cca, size)
-  return(list(power = power.cca.mc,T0 = T0.cca,TA = TA.cca	))
+  return(list(power = power.cca.mc, T0 = T0.cca, TA = TA.cca	))
   
   
 }
+
+
+run.indscal<-function(D1, D2, D10A,D20,D2A,
+                  d,
+                  m,
+                  model,
+                  oos,
+                  size,          
+                  verbose){
+  require(smacof)
+  
+  T0.indscal <- array(0,dim = c(m))     #Test statistics for indscal under null
+  TA.indscal <- array(0,dim = c(m))		#Test statistics for indscal under alternative
+  
+  ##  ==  ==  indscal  ==  == 
+  #embed in-sample measurements
+  if (oos  ==  TRUE) {
+    indscal.model <- smacof::smacofIndDiff(list(D1,D2),ndim=d,constraint = model)
+    X1t= indscal.model$conf[[1]]
+    X2t= indscal.model$conf[[2]]
+    group2cond_tform_1=indscal.model$cweights[[1]]
+    group2cond_tform_2=indscal.model$cweights[[2]]
+    #project using projection vectors computed by indscal
+    #if (profile.mode)			Rprof("profile-oosMDS.out",append = TRUE)
+    Y1t  <- (oosMDS(D10A, X1t) %*% solve(indscal.model$cweights[[1]]))
+    Y20t <- (oosMDS(D20, X2t) %*% solve(indscal.model$cweights[[2]]))
+    Y2At <- (oosMDS(D2A, X2t) %*% solve(indscal.model$cweights[[2]]))
+    #if (profile.mode)			Rprof(NULL)
+    #indscal.config<-rbind(X1t,X2t)
+    }
+  if (m==1){
+    T0.indscal <- sum((Y1t - Y20t)^2)
+    TA.indscal <- sum((Y1t - Y2At)^2)
+  } else{
+    
+    T0.indscal <- rowSums((Y1t - Y20t)^2)
+    TA.indscal <- rowSums((Y1t - Y2At)^2)
+  }
+  power.indscal.mc <- get_power(T0.indscal, TA.indscal, size)
+  return(list(power = power.indscal.mc, T0 = T0.indscal, TA = TA.indscal	))
+  
+}
+
+
+
 
 run.reg.cca<-function(D1, D2, D10A,D20,D2A,
                       p,q,d,c.val,
@@ -723,7 +769,7 @@ run.reg.cca<-function(D1, D2, D10A,D20,D2A,
       X1t <- smacofM(D1,ndim  = d.super,verbose = FALSE)
       X2t <- smacofM(D2,ndim  = d.super,verbose = FALSE)
     } else{
-      X1t <- smacofM(D1,ndim  =  d.super+1,verbose = TRUE)		
+      X1t <- smacofM(D1,ndim  =  d.super+1,verbose = FALSE)		
       X2t <- smacofM(D2,ndim  =  d.super+1,verbose = FALSE)
     }
     
@@ -795,7 +841,7 @@ run.jofc <- function(D1, D2,
                      
                      n,m,
                      d,
-                     model,oos,Wchoice,separability.entries.w,wt.equalize,assume.matched.for.oos,oos.use.imputed,
+                     model,oos,Wchoice="avg",separability.entries.w,wt.equalize,assume.matched.for.oos,oos.use.imputed,
                      
                      pom.config = NULL,
                      w.vals,
@@ -836,7 +882,7 @@ run.jofc <- function(D1, D2,
   
   
   ##  ==  ==  jofc  ==  == 
-  
+  L<-matrix(NA,n,n)
   # Impute "between-condition" dissimilarities from different objects  
   if (Wchoice  ==  "avg") {
     L <- (D1 + D2)/2
@@ -993,9 +1039,13 @@ run.jofc <- function(D1, D2,
       Y1t.A<-Y.At[1:m,]
       Y2At<-Y.At[m+(1:m),]
       
-      
+      if (m==1){
+        print(str(Y1t))
+        T0[l,] <- sum((Y1t - Y2t)^2)
+        TA[l,] <- sum((Y1t.A - Y2At)^2)
+      } else {
       T0[l,] <- rowSums((Y1t - Y2t)^2)
-      TA[l,] <- rowSums((Y1t.A - Y2At)^2)
+      TA[l,] <- rowSums((Y1t.A - Y2At)^2) }
     }		
   }
   
@@ -1226,6 +1276,87 @@ JOFC.Insample.Embed <-function(D,ndimens,w.vals,sep.err.w,init.conf,wt.equalize)
   
   return(smacof.embed)
 }
+
+
+JOFC.Insample.tSNE.Embed <-function(D,ndimens,w.vals,sep.err.w,init.conf,wt.equalize){
+  #  if (profile.mode) Rprof("JOFC.FC.out",append = TRUE)
+  n<- nrow(D)
+  smacof.embed<-list()
+  stress.vec<-c()
+  comm.sum.vec<-c()
+  fid1.sum.vec<-c()
+  fid2.sum.vec<-c()
+  
+  #avg comm and fid errors
+  comm.avg.vec<-c()
+  fid1.avg.vec<-c()
+  fid2.avg.vec<-c()
+  
+  
+  half.n<- n/2
+  for (w in w.vals){
+    sink(paste("debug_log_",w,"insample_embed.txt"))
+    Weight.Mat<-w.val.to.W.mat(w,n,sep.err.w,wt.equalize)
+    Weight.Mat[is.na(D)]<-0
+    D[is.na(D)] <-2*max(D,na.rm=T)
+    print(w)
+    print(head(Weight.Mat))
+    print(head(D))
+    new.embed <- tsne(as.dist(D),k = ndimens ,	W = Weight.Mat        ,
+                         initial_config     =  init.conf
+                         )
+    
+    sink()
+    smacof.embed<-c(smacof.embed,list(new.embed ))
+    stress.mat <- (as.dist(D) - dist(new.embed))^2
+    
+    
+    comm.term  <- 0
+    fid.term.1 <-0
+    fid.term.2 <-0
+    for (i in 1:(half.n-1)) {
+      comm.term <- comm.term + (stress.mat [n*(i-1) - i*(i-1)/2 + half.n])
+      
+      for (j in (i+1):half.n) {
+        fid.term.1 <- fid.term.1  + (stress.mat [n*(i-1) - i*(i-1)/2 + j-i])
+      }
+    }
+    i <- half.n
+    comm.term <- comm.term + (stress.mat [n*(i-1) - i*(i-1)/2 + half.n])
+    for (i in (half.n+1):(n-1)) {
+      for (j in (i+1):n) {
+        fid.term.2 <- fid.term.2  + (stress.mat [n*(i-1) - i*(i-1)/2 + j-i])
+      }
+    }
+    
+    num.fid.terms<-half.n*(half.n-1)/2
+    fid1.sum.vec <- c(fid1.sum.vec,fid.term.1)
+    fid2.sum.vec <- c(fid2.sum.vec,fid.term.2)
+    comm.sum.vec <- c(comm.sum.vec,comm.term)
+    
+    stress.mat<-as.dist(Weight.Mat) * stress.mat
+    stress <- sum(stress.mat)
+    stress.vec<-c(stress.vec,stress)
+    
+    fid1.avg.vec <- c(fid1.avg.vec,fid.term.1/num.fid.terms)
+    fid2.avg.vec <- c(fid2.avg.vec,fid.term.2/num.fid.terms)
+    comm.avg.vec <- c(comm.avg.vec,comm.term/half.n)
+    
+  }
+  FC.ratio   <- (fid1.sum.vec+fid2.sum.vec)/comm.sum.vec
+  FC.ratio.2 <- ((1-w.vals)/w.vals)*(fid1.sum.vec+fid2.sum.vec)/comm.sum.vec
+  FC.ratio.3 <- (fid1.avg.vec + fid2.avg.vec) / comm.avg.vec
+  smacof.embed<-c(smacof.embed,list(stress.vec),
+                  list(fid1.avg.vec),list(fid2.avg.vec),list(comm.avg.vec) ,
+                  list(fid1.sum.vec),list(fid2.sum.vec),list(comm.sum.vec),
+                  list(FC.ratio),list(FC.ratio.2),list(FC.ratio.3))
+  
+  return(smacof.embed)
+}
+
+
+
+
 
 matched_rnorm_old_form<- function(n, p,  q, c, r, alpha,sigma.alpha) {
   ## Return n pairs of matched Normal distributed random vectors, given by
@@ -1496,6 +1627,14 @@ get_crit_val<- function(T0,size)
   return(T0[ceiling(n*(1-size))])	
 }
 
+get_reject_rate <- function(T0, crit.val ){
+  
+  return(sum(T0>=crit.val)/length(T0)	)
+}
+
+
+
+
 get_power <- function(T0, TA, size)
   ## T0: values of test statistic under H0
   ## TA: values of test statistic under HA
@@ -1681,25 +1820,16 @@ get_epsilon <- function(D1, D1X, D2, D2X, X1t, X2t)
     get_epsilon_c(X1t, X2t))
 }
 
-get_power <- function(T0, TA, size)
-  ## T0: values of test statistic under H0
-  ## TA: values of test statistic under HA
-{
-  n <- length(T0)
-  m <- length(size)
-  T0 <- sort(T0)
-  power <- rep(0, m)
-  for (i in 1:m) {
-    if (size[i]  ==  0) {
-      power[i] <- 0
-    } else if(size[i]  ==  1) {
-      power[i] <- 1
-    } else {
-      power[i] <- sum(TA > T0[round(n*(1-size[i]))]) / n
-    }
-  }
-  power
+
+compute.crit.val <- function(T0.stats,test.level){
+  stats.len <- length(T0.stats)
+  upper.quant.est<-floor(test.level*stats.len)
+  T.crit.val <- sort(T0.stats)[stats.len-upper.quant.est+1]
+  return(T.crit.val)
+  
 }
+
+
 
 weight <- function(n, c  =  1)
   ## Create the weight matrix for W = diag(0)+NA
