@@ -1,0 +1,11 @@
+Package: OmnibusEmbed
+Type: Package
+Title: Embeds multiple dissimilarity matrices by joint embedding
+Version: 0.1.0
+Author: Sancar Adali 
+Maintainer: Sancar Adali  <sancar.adali@gmail.com>
+Description: Joint Embedding of multiple dissimilarity matrices using Joint Optimization of Fidelity and Commensurability
+License: GPL-2
+Encoding: UTF-8
+Depends: smacof, MCMCpack,plyr
+LazyData: true
