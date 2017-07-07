@@ -682,9 +682,9 @@ run.cca<-function(D1, D2, D10A,D20,D2A,
 
     print (m)
     print (feat.dim)
-    Y1t  <- matrix(matrix(oosMDS(D10A, X1t),m,feat.dim) %*% xcca$xcoef,m,feat.dim)[, 1:d]
-    Y20t <- matrix(matrix(oosMDS(D20, X2t),m,feat.dim.2) %*% xcca$ycoef,m,feat.dim.2)[, 1:d]
-    Y2At <- matrix(matrix(oosMDS(D2A, X2t),m,feat.dim.2) %*% xcca$ycoef,m,feat.dim.2)[, 1:d]
+    Y1t  <- matrix(matrix(oosMDS(D10A, X1t), m,feat.dim) %*% xcca$xcoef,m,feat.dim)[, 1:d]
+    Y20t <- matrix(matrix(oosMDS(D20,  X2t), m,feat.dim.2) %*% xcca$ycoef,m,feat.dim.2)[, 1:d]
+    Y2At <- matrix(matrix(oosMDS(D2A,  X2t), m,feat.dim.2) %*% xcca$ycoef,m,feat.dim.2)[, 1:d]
     #if (profile.mode)			Rprof(NULL)
     #cca.config<-rbind(X1t,X2t)
 
