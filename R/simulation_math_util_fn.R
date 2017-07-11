@@ -1,4 +1,40 @@
 ## functions
+#' Title
+#'
+#' @param model
+#' @param p
+#' @param r
+#' @param q
+#' @param c.val
+#' @param d
+#' @param pprime1
+#' @param pprime2
+#' @param Wchoice
+#' @param pre.scaling
+#' @param oos
+#' @param alpha
+#' @param n
+#' @param m
+#' @param old.gauss.model.param
+#' @param separability.entries.w
+#' @param compare.pom.cca
+#' @param oos.use.imputed
+#' @param level.mcnemar
+#' @param def.w
+#' @param rival.w
+#' @param proc.dilation
+#' @param assume.matched.for.oos
+#' @param w.vals
+#' @param wt.equalize
+#' @param verbose
+#' @param power.comparison.test
+#' @param cca.reg
+#' @param threewaymds.test
+#'
+#' @return
+#' @export
+#'
+#' @examples
 run.mc.replicate<-function(model,p, r, q, c.val,
                            d            =  p-1,
                            pprime1      =  ifelse(model == "gaussian",p+q,p+q+2),   # cca arguments , signal+noise dimension
@@ -313,6 +349,43 @@ run.mc.replicate<-function(model,p, r, q, c.val,
 }
 
 
+#' Title
+#'
+#' @param model
+#' @param p
+#' @param r
+#' @param q
+#' @param c.val
+#' @param d
+#' @param pprime1
+#' @param pprime2
+#' @param Wchoice
+#' @param pre.scaling
+#' @param oos
+#' @param alpha
+#' @param n
+#' @param m
+#' @param nmc
+#' @param old.gauss.model.param
+#' @param separability.entries.w
+#' @param compare.pom.cca
+#' @param oos.use.imputed
+#' @param level.mcnemar
+#' @param def.w
+#' @param rival.w
+#' @param proc.dilation
+#' @param assume.matched.for.oos
+#' @param w.vals
+#' @param wt.equalize
+#' @param verbose
+#' @param power.comparison.test
+#' @param cca.reg
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
 run.bootstrapped.JOFC<-function(model,p, r, q, c.val,
                                 d            =  p-1,
                                 pprime1      =  ifelse(model == "gaussian",p+q,p+q+2),   # cca arguments , signal+noise dimension
@@ -452,6 +525,14 @@ run.bootstrapped.JOFC<-function(model,p, r, q, c.val,
 }
 
 
+#' Title
+#'
+#' @param dissim.list
+#'
+#' @return
+#' @export
+#'
+#' @examples
 resample.for.param.estim <- function(dissim.list) {
 
 	#Size of given training set
@@ -529,6 +610,16 @@ resample.for.param.estim <- function(dissim.list) {
 
 
 
+#' Title
+#'
+#' @param JOFC.res.reps
+#' @param w.vals.vec
+#' @param level.for.w.compare
+#'
+#' @return
+#' @export
+#'
+#' @examples
 find.best.w.for.power <- function(JOFC.res.reps,w.vals.vec,level.for.w.compare = 0.05) {
 	#w
 	w.vals.best.count <- rep(0,length(w.vals.vec))
@@ -574,6 +665,29 @@ find.best.w.for.power <- function(JOFC.res.reps,w.vals.vec,level.for.w.compare =
 
 }
 
+#' Title
+#'
+#' @param D1
+#' @param D2
+#' @param D10A
+#' @param D20
+#' @param D2A
+#' @param p
+#' @param q
+#' @param d
+#' @param c.val
+#' @param n
+#' @param m
+#' @param model
+#' @param oos
+#' @param proc.dilation
+#' @param size
+#' @param verbose
+#'
+#' @return
+#' @export
+#'
+#' @examples
 run.pom <- function(D1, D2, D10A,D20,D2A,
                     p,q,d,c.val,
                     n,m,
@@ -734,6 +848,24 @@ run.cca<-function(D1, D2, D10A,D20,D2A,
 }
 
 
+#' Title
+#'
+#' @param D1
+#' @param D2
+#' @param D10A
+#' @param D20
+#' @param D2A
+#' @param d
+#' @param m
+#' @param model
+#' @param oos
+#' @param size
+#' @param verbose
+#'
+#' @return
+#' @export
+#'
+#' @examples
 run.indscal<-function(D1, D2, D10A,D20,D2A,
                   d,
                   m,
@@ -778,6 +910,31 @@ run.indscal<-function(D1, D2, D10A,D20,D2A,
 
 
 
+#' Title
+#'
+#' @param D1
+#' @param D2
+#' @param D10A
+#' @param D20
+#' @param D2A
+#' @param p
+#' @param q
+#' @param d
+#' @param c.val
+#' @param pprime1
+#' @param pprime2
+#' @param d.super
+#' @param n
+#' @param m
+#' @param model
+#' @param oos
+#' @param size
+#' @param verbose
+#'
+#' @return
+#' @export
+#'
+#' @examples
 run.reg.cca<-function(D1, D2, D10A,D20,D2A,
                       p,q,d,c.val,
                       pprime1,pprime2,
@@ -864,6 +1021,37 @@ run.reg.cca<-function(D1, D2, D10A,D20,D2A,
 }
 
 
+#' Title
+#'
+#' @param D1
+#' @param D2
+#' @param D10A
+#' @param D20
+#' @param D2A
+#' @param D.oos.1
+#' @param D.oos.2.null
+#' @param D.oos.2.alt
+#' @param L.in.oos.0
+#' @param L.in.oos.A
+#' @param n
+#' @param m
+#' @param d
+#' @param model
+#' @param oos
+#' @param Wchoice
+#' @param separability.entries.w
+#' @param wt.equalize
+#' @param assume.matched.for.oos
+#' @param oos.use.imputed
+#' @param pom.config
+#' @param w.vals
+#' @param size
+#' @param verbose
+#'
+#' @return
+#' @export
+#'
+#' @examples
 run.jofc <- function(D1, D2,
 		             D10A, D20, D2A,
                      D.oos.1,
@@ -1096,6 +1284,27 @@ run.jofc <- function(D1, D2,
 
 
 
+#' Title
+#'
+#' @param p
+#' @param d
+#' @param alpha
+#' @param model
+#' @param old.gauss.model.param
+#' @param r
+#' @param n
+#' @param m
+#' @param mc
+#' @param size
+#' @param q
+#' @param c.val
+#' @param verbose
+#' @param pre.scaling
+#'
+#' @return
+#' @export
+#'
+#' @examples
 generate.dissim <- function(p,  d, alpha, model, old.gauss.model.param, r, n, m, mc, size, q, c.val, verbose, pre.scaling) {
   sigma <- matrix(0,p,p)
 
@@ -1233,6 +1442,19 @@ w.val.to.W.mat<-function(w,n,sep.err.w,wt.equalize){
 
 
 
+#' Title
+#'
+#' @param D
+#' @param ndimens
+#' @param w.vals
+#' @param sep.err.w
+#' @param init.conf
+#' @param wt.equalize
+#'
+#' @return
+#' @export
+#'
+#' @examples
 JOFC.Insample.Embed <-function(D,ndimens,w.vals,sep.err.w,init.conf,wt.equalize){
   #	if (profile.mode) Rprof("JOFC.FC.out",append = TRUE)
   n<- nrow(D)
@@ -1392,6 +1614,20 @@ JOFC.Insample.tSNE.Embed <-function(D,ndimens,w.vals,sep.err.w,init.conf,wt.equa
 
 
 
+#' Title
+#'
+#' @param n
+#' @param p
+#' @param q
+#' @param c
+#' @param r
+#' @param alpha
+#' @param sigma.alpha
+#'
+#' @return
+#' @export
+#'
+#' @examples
 matched_rnorm_old_form<- function(n, p,  q, c, r, alpha,sigma.alpha) {
   ## Return n pairs of matched Normal distributed random vectors, given by
   ## X_{ik} ~ (1-c) Norm(alpha[i] ,I) + c Norm(0,SIGMA+I), i  =  1, ..., n; k  =  1, 2,
@@ -1631,6 +1867,19 @@ matched_rnorm<- function(n, p,  q, c, r, alpha,sigma.alpha,old.gauss.model.param
 
 
 
+#' Title
+#'
+#' @param n
+#' @param p
+#' @param r
+#' @param q
+#' @param c
+#' @param alpha
+#'
+#' @return
+#' @export
+#'
+#' @examples
 matched_rdirichlet <- function(n, p, r, q, c, alpha) {
   ## Return n pairs of matched Dirichlet distribtued random vectors, given by
   ## X_{ik} ~ (1-c) Dir(r alpha[i] + 1) + c Dir(1), i  =  1, ..., n; k  =  1, 2,
@@ -1689,6 +1938,16 @@ get_power <- function(T0, TA, size)
   power
 }
 
+#' Title
+#'
+#' @param D1
+#' @param D2
+#' @param W
+#'
+#' @return
+#' @export
+#'
+#' @examples
 omnibusM <- function(D1, D2, W)
 {
   D1 <- as.matrix(D1)
@@ -1698,6 +1957,16 @@ omnibusM <- function(D1, D2, W)
 }
 
 
+#' Title
+#'
+#' @param D1
+#' @param D2
+#' @param W
+#'
+#' @return
+#' @export
+#'
+#' @examples
 omnibusM.inoos <- function(D1, D2, W)
 {
   D1 <- as.matrix(D1)
@@ -1995,6 +2264,22 @@ colVars <- function(x, na.rm = FALSE, dims = 1, unbiased = TRUE, SumSquares = FA
   (colSums(x^2, na.rm, dims) - colSums(x, na.rm, dims)^2/N) / Nm1
 }
 
+#' Title
+#'
+#' @param D1
+#' @param D2
+#' @param X1
+#' @param X2
+#' @param Y1
+#' @param Y20
+#' @param Y2A
+#' @param model
+#' @param ndim
+#'
+#' @return
+#' @export
+#'
+#' @examples
 ThreewayMDS.Embed.Hyp.Test <- function(D1,D2,X1,X2,Y1,Y20,Y2A,model,ndim){
 
 

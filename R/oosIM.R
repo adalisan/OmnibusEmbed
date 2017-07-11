@@ -1,8 +1,25 @@
 #
-# OOS-embedding with weighted raw-stress 
+# OOS-embedding with weighted raw-stress
 #
 
 
+#' Title
+#'
+#' @param D
+#' @param X
+#' @param init
+#' @param verbose
+#' @param itmax
+#' @param eps
+#' @param W
+#' @param isWithin
+#' @param bwOos
+#' @param debug
+#'
+#' @return
+#' @export
+#'
+#' @examples
 oosIM <- function(D, X,
                   init     = "random",
                   verbose  = FALSE,
@@ -22,11 +39,11 @@ oosIM <- function(D, X,
   ##             observation is within-sample and 0 means it is an out-of-sample
   ##             observation.
   ##          W: NULL if using equal weights. Otherwise, specify a (n+m)x(n+m)
-  ##             weight matrix, whose up-left corner is the nxn 0 matrix. 
+  ##             weight matrix, whose up-left corner is the nxn 0 matrix.
   ##   bwOos   : whether to use distances between oos observations.
   ##
   ## Return: a k x ncol(X) matrix
-  
+
   N <- nrow(D)
   n <- nrow(X)
   m <- N - n
@@ -34,7 +51,7 @@ oosIM <- function(D, X,
   rnames <- rownames(D)
   unname(D)
   unname(X)
-  
+
   if (!is.null(isWithin)) {
     i1 <- which(isWithin == 1)
     i0 <- which(isWithin == 0)
@@ -57,7 +74,7 @@ oosIM <- function(D, X,
   } else {
     stop("init shuld be 'random', 'gower', or a matrix!")
   }
-  
+
   ## calculate V
   if (is.null(W)) {
     W = matrix(1, n+m, n+m)
@@ -66,11 +83,11 @@ oosIM <- function(D, X,
   if (!bwOos) {
     W[-(1:n), -(1:n)] <- 0
   }
-  
+
   V <- -W
   diag(V) <- colSums(W) - diag(W)
   if(debug && sum(is.na(V)>0)) print("is.na V ")
-  
+
   Vmn <- V[-(1:n), 1:n]
   Vm <- V[-(1:n), -(1:n)]
   VmInv <- ginv(Vm)
@@ -78,9 +95,9 @@ oosIM <- function(D, X,
   ## distance *between* in-samples and out-of-samples
   dissBw <- D[-(1:n), 1:n]
   dEucBw <- t((outer(rowSums(X^2),rowSums(Y^2),"+") - 2*X%*%t(Y)))
-  
+
   dEucBw <- sqrt(dEucBw+abs(dEucBw)/2)
-  
+
   if(debug && sum(is.na(dEucBw)>0)) print("is.na dEucBw ")
   if (bwOos == TRUE) {
     dissWn <- as.dist(D[-(1:n), -(1:n)])
@@ -93,42 +110,42 @@ oosIM <- function(D, X,
     print("is.na dEucWn ")
     print(Y)
   }
-  
+
   stressOld <- sum((dissBw - dEucBw)^2) + sum((dissWn - dEucWn)^2)
   if (debug && is.na(stressOld)|is.nan(stressOld)) {
     print("init matrices")
-    if ( sum(is.na(dissWn))>0) { 
+    if ( sum(is.na(dissWn))>0) {
       print("dissWn")
       print(head(dissWn))}
     if ( sum(is.na(dEucBw))>0) {
       print("dEucBw")
       print(head(dEucBw))
   }
-    
-    if ( sum(is.na(dEucWn))>0) { 
+
+    if ( sum(is.na(dEucWn))>0) {
       print("dEucWn")
       print(head(dEucWn))}
     print("init matrices end ")
   }
   for (itel in 1:itmax) {
     ## Bmn is an off-diagnoal blcok of B
-    
-    
+
+
     dEucBw[dEucBw<1e-8]<-Inf
-    
-    
-    Bmn <- - W[-(1:n), 1:n]*dissBw / dEucBw 
-    
-    
+
+
+    Bmn <- - W[-(1:n), 1:n]*dissBw / dEucBw
+
+
     if (debug && sum(is.na((dissBw)))) print("NA in dissBw")
     if (debug &&sum(is.na((dEucBw)))) print("NA in dEucBw")
     if (debug &&sum(is.na((dissWn)))) print("NA in dissWn")
     if (debug &&sum(is.na((Bmn))))    print("NA in Bmn")
-    
-    
+
+
     ## calculate Bm
     ## notice that the off-diagnoal entries of Bn should be all 0's
-    
+
     if(m == 1 || bwOos == FALSE) {
       Bm <- - diag(rowSums(Bmn), m, m)
     } else {
@@ -136,17 +153,17 @@ oosIM <- function(D, X,
       Bm <- -W[-(1:n),-(1:n)]*as.matrix(dissWn / dEucWn)
       diag(Bm) <- - (rowSums(Bm) + rowSums(Bmn))
     }
-    
+
     if (debug &&sum(is.na((Bmn)))) print("NA in Bmn")
     if (debug &&sum(is.na((Bm)))) print("NA in Bm")
     if (debug &&sum(is.na((VmInv)))) print("NA in VmInv")
     if (debug &&sum(is.na((Vmn)))) print("NA in Vmn")
     Z <- VmInv %*% ((Bmn - Vmn) %*% X + Bm %*% Y)
-    
+
     dEucBw <- t((outer(rowSums(X^2),rowSums(Z^2),"+") - 2*X%*%t(Z)))
     dEucBw <- sqrt((dEucBw + abs(dEucBw) )/2)
     if (bwOos == TRUE) {
-      dEucWn <- dist(Z) 
+      dEucWn <- dist(Z)
     } else {
       dEucWn <- 0
     }
@@ -168,15 +185,15 @@ oosIM <- function(D, X,
           " Stress:",
           formatC(c(stressOld,stress), digits=5, width=7, format="f"),"\n")
     }
-    
+
     if (stressOld - stress < eps) {
       break()
     }
-    
+
     Y <- Z
     stressOld <- stress
   }
-  
+
   rownames(Y) <- rnames[-(1:n)]
   Y
 }

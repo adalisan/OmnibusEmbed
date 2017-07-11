@@ -1,7 +1,19 @@
-#
-# Embedding in-sample with weighted raw-stress criterion
-#
 
+#'  Embedding in-sample dissimilarities with weighted raw-stress criterion using SMACOF
+#'
+#' @param D
+#' @param ndim
+#' @param W
+#' @param init
+#' @param verbose
+#' @param itmax
+#' @param eps
+#' @param debug.mode
+#'
+#' @return
+#' @export
+#'
+#' @examples
 smacofM <- function(D,
                     ndim    = 2,
                     W       = NULL,
@@ -33,8 +45,8 @@ smacofM <- function(D,
     } else {
         X <- init
     }
-    
-    
+
+
    if ((sum(is.null(X))>0) |(sum(is.na(X))>0)| (sum(is.infinite(X))>0)| (ncol(X)==0)) {
     X <- mvrnorm(n, mu = rep(0,ndim), Sigma = max(D,na.rm=TRUE)*diag(ndim))
        X <- matrix(X, nrow=n, ncol=ndim)
@@ -59,11 +71,11 @@ smacofM <- function(D,
     V <- -W
     diag(V) <- rowSums(W)
 	if (verbose){
-		
+
 		print(V)
 		print(W)
 	}
-		
+
     Vinv <- ginv(V)
     distE <- dist(X)
  if ((sum(is.null(distE))>0) |(sum(is.na(distE))>0) ) {
@@ -80,7 +92,7 @@ smacofM <- function(D,
 
     ##--------------- begin majorization --------------------
     for (itel in 1:itmax) {
-		
+
         B <- - as.matrix(distW * distD / ifelse(distE > 1e-08, distE, Inf))
         diag(B) <- - rowSums(B)
         Z <- Vinv %*% B %*% X
@@ -94,25 +106,41 @@ smacofM <- function(D,
 			stop.crit<-"eps"
             break()
 		}
-        
+
         X <- Z
         stressOld <- stress
 		if (itel==itmax)
 			stop.crit<-"itmax"
     }
-	
+
     ##------------------ end majorization ---------------
     rownames(X) <- rnames
     X
 }
 
 
+#'
+#'  Embedding out-of-sample dissimilarities with weighted raw-stress criterion using SMACOF
+#'
+#' @param D
+#' @param X
+#' @param oos.flag
+#' @param W
+#' @param init
+#' @param verbose
+#' @param itmax
+#' @param eps
+#'
+#' @return
+#' @export
+#'
+#' @examples
 smacofOos <- function(D,
 					X,
-					
+
 					oos.flag,
 					W       = NULL,
-					
+
                     init    = NULL,
                     verbose = FALSE,
                     itmax   = 1000,
@@ -124,7 +152,7 @@ smacofOos <- function(D,
 	rnames <- rownames(D)
 	rownames(D) <- NULL
 	colnames(D) <- NULL
-	
+
 	if (is.null(init))
 		Z<-cmdscale(D[!oos.flag,!oos.flag],n.dim)
 	else Z<- matrix(init,nrow=m)
@@ -141,8 +169,8 @@ smacofOos <- function(D,
     Vinv<-ginv(V.m)
 	distE <- dist(rbind(X,Z))
 	stressOld <- sum(distW * (distD - distE)^2)
-	
-	
+
+
 	for (itel in 1:itmax) {
 		B <- - as.matrix(distW * distD / ifelse(distE > 1e-08, distE, Inf))
 		diag(B) <- - rowSums(B)
@@ -151,15 +179,15 @@ smacofOos <- function(D,
 		Y <- Vinv %*% (B.mn-V.mn) %*% X+Vinv%*%B.m%*%Z
 		distE <- dist(rbind(X,Y))
 		stress <- sum(distW * (distD - distE)^2)
-		
+
 		if (verbose)
 			cat("Iteration:", formatC(itel,width=3, format="d"),
 					" Stress:", formatC(c(stressOld,stress),digits=5,width=7,format="f"),"\n")
 		if (stressOld - stress < eps)
 			break()
-		
+
 		Z <- Y
-		
+
 		stressOld <- stress
 	}
 	##------------------ end majorization ---------------
