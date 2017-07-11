@@ -1,10 +1,12 @@
 
 #' Title
 #'
-#' @param D
-#' @param X
-#' @param w
-#' @param init
+#' @param D the full (n+k)x(n+k) distance matrix
+#' @param X the within-sample (CMDS) embeddings
+#' @param w a vector with {0,1}-elements of length n+k. 1 indicates the
+#'         corresponding observation is within-sample and 0 means it is
+#'         an out-of-sample observation.
+#' @param init  "random", "gower" or a numerical matrix
 #' @param itmax
 #'
 #' @return
@@ -13,14 +15,7 @@
 #' @examples
 oosMDS <- function(D, X, w=c(rep(1, nrow(X)), rep(0, nrow(as.matrix(D))-nrow(X))),
                    init = "gower", itmax = 100) {
-  ## Args:
-  ##   D   : the full (n+k)x(n+k) distance matrix
-  ##   X   : the within-sample (CMDS) embeddings
-  ##   init: "random", "gower" or a numerical matrix
-  ##   w   : a vector with {0,1}-elements of length n+k. 1 indicates the
-  ##         corresponding observation is within-sample and 0 means it is
-  ##         an out-of-sample observation.
-  ##
+
   n <- nrow(X)
   d <- ncol(X)
   k <- length(w) - sum(w)
